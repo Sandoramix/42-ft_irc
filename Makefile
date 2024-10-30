@@ -6,9 +6,12 @@ CXXFLAGS:=-std=c++98 -Wall -Wextra -Werror -g -I./includes
 SRC = ./src/Client.cpp \
 	./src/Server.cpp \
 	./src/cmd/CmdInterface.cpp \
+	./src/cmd/InviteCmd.cpp \
 	./src/cmd/JoinCmd.cpp \
+	./src/cmd/KickCmd.cpp \
+	./src/cmd/ModeCmd.cpp \
+	./src/cmd/TopicCmd.cpp \
 	./src/main.cpp
-
 
 
 all: $(NAME)

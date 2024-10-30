@@ -1,6 +1,11 @@
 #include <iostream>
+#include <csignal>
 
 #include "Server.hpp"
+
+void handleSigInt(int sig) { if (sig==SIGINT) { SERVER_RUNNING = false; }}
+
+bool SERVER_RUNNING = false;
 
 int main(int argc, char* argv[])
 {
@@ -10,7 +15,8 @@ int main(int argc, char* argv[])
 	}
 
 	try {
-		Server server(argv[1], argv[2]);
+		Server server("0.0.0.0", argv[1], argv[2]);
+		signal(SIGINT, handleSigInt);
 		server.run();
 	}
 	catch (const Server::BadConfigException& e) {

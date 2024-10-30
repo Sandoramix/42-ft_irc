@@ -1,9 +1,35 @@
 #include "Server.hpp"
+#include "cmd/InviteCmd.hpp"
+#include "cmd/JoinCmd.hpp"
+#include "cmd/KickCmd.hpp"
+#include "cmd/ModeCmd.hpp"
+#include "cmd/TopicCmd.hpp"
 
+#include <csignal>
 #include <cstdlib>
 #include <string>
 
-Server::Server(const std::string& port, const std::string& password)
+
+// PRIVATE METHODS ------------------------------------------------------------
+
+void Server::initCommands()
+{
+	allCommands["INVITE"] = new InviteCmd(*this);
+	allCommands["JOIN"] = new JoinCmd(*this);
+	allCommands["KICK"] = new KickCmd(*this);
+	allCommands["MODE"] = new ModeCmd(*this);
+	allCommands["TOPIC"] = new TopicCmd(*this);
+}
+
+void Server::initSocket()
+{
+
+}
+
+// PUBLIC METHODS -------------------------------------------------------------
+
+// CONSTRUCTOR
+Server::Server(const std::string& host, const std::string& port, const std::string& password)
 {
 	// PORT VALIDATION
 	if (port.empty()) { throw BadConfigException("Invalid port: empty string."); }
@@ -17,30 +43,37 @@ Server::Server(const std::string& port, const std::string& password)
 	// PASSWORD VALIDATION
 	if (password.empty()) { throw BadConfigException("Invalid password: empty string."); }
 	this->password = password;
+
+	// HOST VALIDATION
+	if (host.empty()) { throw BadConfigException("Invalid host: empty string."); }
+	this->host = host;
 }
 
+// DESTRUCTOR
+Server::~Server()
+{
+	this->allCommands.clear();
+}
+
+// START SERVER
 void Server::run()
 {
 	// Server socket creation > bind > listen
-	// MAIN LOOP
-	// - accept
-	// - parse
-	// - run
-	// - send
-	// ?
-}
 
+	// MAIN LOOP
+	SERVER_RUNNING = true;
+	while (SERVER_RUNNING) {
+		// - accept
+		// - parse
+		// - run
+		// - send
+		// ?
+	}
+}
 // EXCEPTIONS -----------------------------------------------------------------
 Server::BadConfigException::BadConfigException(const std::string& msg)
-		:msg(msg)
-{
-}
-
-Server::BadConfigException::~BadConfigException() throw()
-{
-}
-
-const char* Server::BadConfigException::what() const throw()
-{
-	return this->msg.c_str();
-}
+		:msg(msg) { }
+Server::BadConfigException::~BadConfigException() throw() { }
+const char* Server::BadConfigException::what() const throw() { return this->msg.c_str(); }
+Server::BadConfigException::BadConfigException(const Server::BadConfigException& b)
+		:msg(b.msg) { }
