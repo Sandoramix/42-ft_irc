@@ -52,12 +52,16 @@ Server::Server(const std::string& host, const std::string& port, const std::stri
 // DESTRUCTOR
 Server::~Server()
 {
+	for (ServerCommandsMap::iterator it = this->allCommands.begin(); it != this->allCommands.end(); ++it){
+		delete it->second;
+	}
 	this->allCommands.clear();
 }
 
 // START SERVER
 void Server::run()
 {
+	this->initCommands();
 	// Server socket creation > bind > listen
 
 	// MAIN LOOP
