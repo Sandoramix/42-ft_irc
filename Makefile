@@ -4,7 +4,7 @@ CXX:=clang++
 CXXFLAGS:=-std=c++98 -Wall -Wextra -Werror -g -I./includes
 
 SRC = ./src/Client.cpp \
-	./src/IRCServer.cpp \
+	./src/Server.cpp \
 	./src/cmd/CmdInterface.cpp \
 	./src/cmd/JoinCmd.cpp \
 	./src/main.cpp

@@ -4,33 +4,31 @@
 #include <vector>
 #include <stdexcept>
 
-
 class CmdInterface;
 
 #include "Client.hpp"
-#include "IRCServer.hpp"
+#include "Server.hpp"
 
 /**
  * Parent class for all commands.
  * Provides common functionality for all commands.
  * Every command will be instantiated by the server at startup.
 */
-class CmdInterface
-{
+class CmdInterface {
 protected:
-	bool              authenticationRequired;
+	bool authenticationRequired;
 	const std::string commandName;
-	const IRCServer & server;
+	const Server& server;
 
 public:
-	CmdInterface(const std::string &commandName, const IRCServer &server, bool authenticationRequired = true);
+	CmdInterface(const std::string& commandName, const Server& server, bool authenticationRequired = true);
+
 	virtual ~CmdInterface();
 
-	virtual void run(const Client &requestedFrom, const std::vector<std::string> &params);
+	virtual void run(const Client& requestedFrom, const std::vector<std::string>& params);
 
 protected:
-	bool canUserRun(const Client &requestedFrom) const;
+	bool canUserRun(const Client& requestedFrom) const;
 };
-
 
 #endif //IRCCMD_HPP

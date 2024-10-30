@@ -5,13 +5,13 @@
 
 #include "CmdInterface.hpp"
 
-class JoinCmd: public CmdInterface
-{
-	public:
-		JoinCmd(const IRCServer &server);
-		~JoinCmd();
+class JoinCmd : public CmdInterface {
+public:
+	JoinCmd(const Server& server);
 
-		virtual void run(const Client &requestedFrom, const std::vector<std::string> &params);
+	~JoinCmd();
+
+	virtual void run(const Client& requestedFrom, const std::vector<std::string>& params);
 };
 
 #endif //JOINCMD_HPP
