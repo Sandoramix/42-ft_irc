@@ -1,4 +1,5 @@
 #include "Server.hpp"
+
 #include "cmd/InviteCmd.hpp"
 #include "cmd/JoinCmd.hpp"
 #include "cmd/KickCmd.hpp"
@@ -6,16 +7,15 @@
 #include "cmd/TopicCmd.hpp"
 
 
-
 // PRIVATE METHODS ------------------------------------------------------------
 
 void Server::initCommands()
 {
-	allCommands["INVITE"] = new InviteCmd(*this);
-	allCommands["JOIN"] = new JoinCmd(*this);
-	allCommands["KICK"] = new KickCmd(*this);
-	allCommands["MODE"] = new ModeCmd(*this);
-	allCommands["TOPIC"] = new TopicCmd(*this);
+	commands["INVITE"] = new InviteCmd(*this);
+	commands["JOIN"] = new JoinCmd(*this);
+	commands["KICK"] = new KickCmd(*this);
+	commands["MODE"] = new ModeCmd(*this);
+	commands["TOPIC"] = new TopicCmd(*this);
 }
 
 void Server::startListening()
@@ -54,7 +54,10 @@ void Server::startListening()
 void Server::acceptConnection()
 {
 	// Check if server is full: if the users don't exceed the maxConnections.
-	(void)this->maxConnections;
+	if (this->clients.size() >= this->maxConnections) {
+		std::cerr << "Server is full: cannot accept new connection." << std::endl;
+		return;
+	}
 
 	SocketAddrIn addr;
 	socklen_t addr_len = sizeof(addr);
@@ -69,6 +72,10 @@ void Server::acceptConnection()
 	}
 	// save the user somewhere
 	// this->usersMap[clientFd] = new User(...)
+	if (this->clients.find(clientFd) != this->clients.end()) {
+		delete this->clients[clientFd];
+	}
+	this->clients[clientFd] = new Client(clientFd);
 
 	PollFd poll = pollfd();
 	poll.fd = clientFd;
@@ -78,7 +85,72 @@ void Server::acceptConnection()
 	// std::cout << "New connection accepted" << std::endl;
 }
 
+void Server::receiveClientMessage(Client *client)
+{
+	char buffer[RECV_BUFFER_SIZE + 1];
+	int bytesRead = 0;
+	bool disconnected = false;
+
+	do {
+		bytesRead = recv(client->getSocketFd(), buffer, RECV_BUFFER_SIZE, 0);
+		if (bytesRead == -1) {
+			client->setLocalBuffer("");
+			std::cerr << "Error while receiving data from client." << std::endl;
+			return;
+		}
+		buffer[bytesRead] = 0;
+		if (bytesRead == 0 && client->getLocalBuffer().empty()) {
+			// TODO: find a way to disconnect client
+			//std::cerr << "Client disconnected." << std::endl;
+			//disconnected = true;
+			break;
+		}
+		client->setLocalBuffer(client->getLocalBuffer() + buffer);
+	} while (bytesRead > 0);
+	if (disconnected) {
+		client->setState(CS_DISCONNECTED);
+		return;
+	}
+}
+
 // PUBLIC METHODS -------------------------------------------------------------
+
+bool Server::tryToRunClientCommand(Client *client)
+{
+	bool atleastOneCommand = false;
+	std::string endDelimiter = "\r\n";
+	size_t pos;
+
+
+	pos = client->getLocalBuffer().find(endDelimiter);
+	while (pos != std::string::npos) {
+		std::string command = client->getLocalBuffer().substr(0, pos);
+		client->setLocalBuffer(client->getLocalBuffer().substr(pos+endDelimiter.size()));
+		atleastOneCommand = true;
+
+		// Get command name
+		size_t firstSpace = command.find(' ');
+		if (firstSpace == std::string::npos) {
+			std::cerr << "Invalid command received from client." << std::endl;
+			// TODO: send error message
+			return false;
+		}
+		std::string commandName = command.substr(0, firstSpace);
+		command = command.substr(firstSpace+1);
+		if (this->commands.find(commandName) == this->commands.end()) {
+			std::cerr << "Unknown command received from client." << std::endl;
+			// TODO: send error message
+			return false;
+		}
+		CmdInterface *cmd = this->commands[commandName];
+
+		// Get command parameters (may be different for some commands (e.g. PASS))
+		std::vector<std::string> params = cmd->parseArgs(command);
+
+		cmd->run(*client, params);
+	};
+	return atleastOneCommand;
+}
 
 // CONSTRUCTOR
 Server::Server(const std::string& host, const std::string& port, const std::string& password)
@@ -106,10 +178,15 @@ Server::Server(const std::string& host, const std::string& port, const std::stri
 // DESTRUCTOR
 Server::~Server()
 {
-	for (ServerCommandsMap::iterator it = this->allCommands.begin(); it!=this->allCommands.end(); ++it) {
+	for (ServerCommandsMap::iterator it = this->commands.begin(); it!=this->commands.end(); ++it) {
 		delete it->second;
 	}
-	this->allCommands.clear();
+	this->commands.clear();
+
+	for (ClientsMap::iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
+		delete it->second;
+	}
+	this->clients.clear();
 }
 
 // START SERVER
@@ -134,7 +211,16 @@ void Server::run()
 			for (ClientPollVector::iterator clientPoll = this->clientPollFds.begin(); clientPoll != this->clientPollFds.end(); ++clientPoll) {
 				if (clientPoll->events == POLLIN) {
 					// receive && parse message
+					this->receiveClientMessage(this->clients[clientPoll->fd]);
+					this->tryToRunClientCommand(this->clients[clientPoll->fd]);
 				}
+			}
+		}
+		//Remove disconnected clients
+		for (ClientsMap::iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
+			if (it->second->getState() == CS_DISCONNECTED) {
+				delete it->second;
+				this->clients.erase(it);
 			}
 		}
 	}

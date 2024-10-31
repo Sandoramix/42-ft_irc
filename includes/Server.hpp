@@ -3,6 +3,9 @@
 # ifndef IRC_MAX_CONNECTIONS
 #  define IRC_MAX_CONNECTIONS 420
 # endif
+# ifndef RECV_BUFFER_SIZE
+#  define RECV_BUFFER_SIZE 1024
+# endif
 
 #include <exception>
 #include <iostream>
@@ -16,12 +19,15 @@
 #include <poll.h>
 
 class Server;
+class Client;
 #include "cmd/CmdInterface.hpp"
+#include "Client.hpp"
 
 typedef struct sockaddr SocketAddr;
 typedef struct sockaddr_in SocketAddrIn;
 typedef struct pollfd PollFd;
 
+typedef std::map<int, Client*> ClientsMap;
 typedef std::map<const std::string, CmdInterface*> ServerCommandsMap;
 typedef std::vector<PollFd> ClientPollVector;
 
@@ -37,8 +43,10 @@ private:
 
 // Server-only members
 private:
+	/// Map of currently connected clients (key: client fd, value: client object)
+	ClientsMap clients;
 	/// Map of implemented commands (key: command name, value: command object)
-	ServerCommandsMap allCommands;
+	ServerCommandsMap commands;
 
 	/// Socket file descriptor
 	int socketFd;
@@ -54,8 +62,13 @@ private:
 	void startListening();
 
 	/// Accept connection: add new user
-    void acceptConnection();
+	void acceptConnection();
 
+	/// Parse data received from client
+	void receiveClientMessage(Client* client);
+
+	/// Try to parse the client buffer as a command if the buffer contains a complete command (ends with '\r\n')
+	bool tryToRunClientCommand(Client* client);
 public:
 	Server(const std::string& host, const std::string& port, const std::string& password);
 	~Server();
