@@ -22,7 +22,7 @@ typedef struct sockaddr SocketAddr;
 typedef struct sockaddr_in SocketAddrIn;
 typedef struct pollfd PollFd;
 
-typedef std::map<const std::string&, CmdInterface*> ServerCommandsMap;
+typedef std::map<const std::string, CmdInterface*> ServerCommandsMap;
 typedef std::vector<PollFd> ClientPollVector;
 
 extern bool SERVER_RUNNING;

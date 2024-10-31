@@ -73,7 +73,7 @@ void Server::acceptConnection()
 	PollFd poll = pollfd();
 	poll.fd = clientFd;
 	poll.events = POLLIN;
-	this->clientPollFds.emplace_back(poll);
+	this->clientPollFds.push_back(poll);
 
 	// std::cout << "New connection accepted" << std::endl;
 }
