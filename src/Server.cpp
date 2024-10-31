@@ -5,11 +5,6 @@
 #include "cmd/ModeCmd.hpp"
 #include "cmd/TopicCmd.hpp"
 
-#include <csignal>
-#include <cstdlib>
-#include <string>
-#include <arpa/inet.h>
-#include <iostream>
 
 
 // PRIVATE METHODS ------------------------------------------------------------
@@ -30,21 +25,57 @@ void Server::startListening()
 		throw ServerException("Socket creation failed");
 	}
 
+	int optval = 1;
+	if (setsockopt(this->socketFd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) != 0) {
+		throw ServerException("Failed to set socket option");
+	}
+
+	if (fcntl(this->socketFd, F_SETFL, O_NONBLOCK) == -1) {
+		throw ServerException("Failed to set socket as non-blocking");
+	}
+
 	this->socketAddr.sin_family = AF_INET;
 	this->socketAddr.sin_addr.s_addr = inet_addr(this->host.c_str());
 	this->socketAddr.sin_port = htons(this->port);
 
-	int optval = 1;
-	if (setsockopt(this->socketFd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
-		throw ServerException("Failed to set socket option");
-	}
 
-	if (bind(this->socketFd, (struct sockaddr*)&this->socketAddr, sizeof(this->socketAddr))<0) {
+	if (bind(this->socketFd, (struct sockaddr*)&this->socketAddr, sizeof(this->socketAddr)) < 0) {
 		throw ServerException("Failed to bind socket");
 	}
 	if (listen(this->socketFd, (int)this->maxConnections) < 0){
 		throw ServerException("Failed to listen on socket");
 	}
+
+	this->serverPollFd = pollfd();
+	this->serverPollFd.fd = this->socketFd;
+	this->serverPollFd.events = POLLIN;
+}
+
+void Server::acceptConnection()
+{
+	// Check if server is full: if the users don't exceed the maxConnections.
+	(void)this->maxConnections;
+
+	SocketAddrIn addr;
+	socklen_t addr_len = sizeof(addr);
+	int clientFd = accept(this->socketFd, (SocketAddr *)&addr, &addr_len);
+	if (clientFd == -1) {
+		std::cerr << "Someone tried to connect but the `accept` failed..." << std::endl;
+		return;
+	}
+	if (fcntl(clientFd, F_SETFL, O_NONBLOCK) == -1) {
+		std::cerr << "Could not accept a new user because an error occurred when trying to set the socket as non-blocking" << std::endl;
+		return;
+	}
+	// save the user somewhere
+	// this->usersMap[clientFd] = new User(...)
+
+	PollFd poll = pollfd();
+	poll.fd = clientFd;
+	poll.events = POLLIN;
+	this->clientPollFds.emplace_back(poll);
+
+	// std::cout << "New connection accepted" << std::endl;
 }
 
 // PUBLIC METHODS -------------------------------------------------------------
@@ -91,11 +122,21 @@ void Server::run()
 	SERVER_RUNNING = true;
 	std::cout << "Server running on port " << this->port << "... Press Ctrl+C to stop." << std::endl;
 	while (SERVER_RUNNING) {
-	// - accept
-	// - parse
-	// - run
-	// - send
-	// ?
+		// - accept
+		// - parse
+		// - run
+		// - send
+		// ?
+
+		if (this->serverPollFd.revents == POLLIN) {
+			this->acceptConnection();
+		} else {
+			for (ClientPollVector::iterator clientPoll = this->clientPollFds.begin(); clientPoll != this->clientPollFds.end(); ++clientPoll) {
+				if (clientPoll->events == POLLIN) {
+					// receive && parse message
+				}
+			}
+		}
 	}
 }
 // EXCEPTIONS -----------------------------------------------------------------

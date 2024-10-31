@@ -1,19 +1,29 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 # ifndef IRC_MAX_CONNECTIONS
-#  define IRC_MAX_CONNECTIONS 10
+#  define IRC_MAX_CONNECTIONS 420
 # endif
 
 #include <exception>
-#include <map>
+#include <iostream>
 #include <string>
+#include <map>
+#include <csignal>
+#include <cstdlib>
+#include <fcntl.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
+#include <poll.h>
 
 class Server;
 #include "cmd/CmdInterface.hpp"
 
-typedef struct sockaddr_in SocketAddr;
+typedef struct sockaddr SocketAddr;
+typedef struct sockaddr_in SocketAddrIn;
+typedef struct pollfd PollFd;
+
 typedef std::map<const std::string&, CmdInterface*> ServerCommandsMap;
+typedef std::vector<PollFd> ClientPollVector;
 
 extern bool SERVER_RUNNING;
 
@@ -33,12 +43,18 @@ private:
 	/// Socket file descriptor
 	int socketFd;
 	/// Socket address
-	SocketAddr socketAddr;
+	SocketAddrIn socketAddr;
+	/// polling fds
+	PollFd serverPollFd;
+	ClientPollVector clientPollFds;
 
 // Server-only methods
 private:
 	void initCommands();
 	void startListening();
+
+	/// Accept connection: add new user
+    void acceptConnection();
 
 public:
 	Server(const std::string& host, const std::string& port, const std::string& password);
