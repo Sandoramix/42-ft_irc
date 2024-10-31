@@ -14,7 +14,7 @@ Made by:
 
 ## Requirements
 
-- **C++98 compiler** _(clang++ is used in this project)_
+- **C++98 compiler** _(clang++ v14.0.0 is used in this project)_
 - **make**
 - **valgrind** _(optional)_
 - **curl** _(optional)_
