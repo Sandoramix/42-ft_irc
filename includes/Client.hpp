@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "IRCUtils.hpp"
 #include "cmd/CmdInterface.hpp"
 
 typedef std::vector<CmdInterface *> ClientCommandsQueue;

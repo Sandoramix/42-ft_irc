@@ -18,8 +18,10 @@
 #include <netinet/in.h>
 #include <poll.h>
 
+
 class Server;
 class Client;
+#include "IRCUtils.hpp"
 #include "cmd/CmdInterface.hpp"
 #include "Client.hpp"
 
@@ -29,7 +31,7 @@ typedef struct pollfd PollFd;
 
 typedef std::map<int, Client*> ClientsMap;
 typedef std::map<const std::string, CmdInterface*> ServerCommandsMap;
-typedef std::vector<PollFd> ClientPollVector;
+typedef std::vector<PollFd> AllPollFdsVector;
 
 extern bool SERVER_RUNNING;
 
@@ -53,8 +55,7 @@ private:
 	/// Socket address
 	SocketAddrIn socketAddr;
 	/// polling fds
-	PollFd serverPollFd;
-	ClientPollVector clientPollFds;
+	AllPollFdsVector allPollFds;
 
 // Server-only methods
 private:
@@ -69,6 +70,9 @@ private:
 
 	/// Try to parse the client buffer as a command if the buffer contains a complete command (ends with '\r\n')
 	bool tryToRunClientCommand(Client* client);
+
+	/// Delete disconnected clients
+	void deleteDisconnectedClients();
 public:
 	Server(const std::string& host, const std::string& port, const std::string& password);
 	~Server();

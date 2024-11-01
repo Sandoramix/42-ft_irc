@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "Server.hpp"
 
 #include "cmd/InviteCmd.hpp"
@@ -16,6 +17,7 @@ void Server::initCommands()
 	commands["KICK"] = new KickCmd(*this);
 	commands["MODE"] = new ModeCmd(*this);
 	commands["TOPIC"] = new TopicCmd(*this);
+	debug("Initialized " << commands.size() << " commands.");
 }
 
 void Server::startListening()
@@ -46,9 +48,10 @@ void Server::startListening()
 		throw ServerException("Failed to listen on socket");
 	}
 
-	this->serverPollFd = pollfd();
-	this->serverPollFd.fd = this->socketFd;
-	this->serverPollFd.events = POLLIN;
+	this->allPollFds.push_back(pollfd());
+	this->allPollFds.back().fd = this->socketFd;
+	this->allPollFds.back().events = POLLIN;
+	debug("Socket created && bound && listening. Socket fd: " << this->socketFd);
 }
 
 void Server::acceptConnection()
@@ -70,54 +73,47 @@ void Server::acceptConnection()
 		std::cerr << "Could not accept a new user because an error occurred when trying to set the socket as non-blocking" << std::endl;
 		return;
 	}
-	// save the user somewhere
-	// this->usersMap[clientFd] = new User(...)
 	if (this->clients.find(clientFd) != this->clients.end()) {
 		delete this->clients[clientFd];
 	}
 	this->clients[clientFd] = new Client(clientFd);
 
-	PollFd poll = pollfd();
-	poll.fd = clientFd;
-	poll.events = POLLIN;
-	this->clientPollFds.push_back(poll);
+	this->allPollFds.push_back(pollfd());
+	this->allPollFds.back().fd = clientFd;
+	this->allPollFds.back().events = POLLIN | POLLHUP;
 
-	// std::cout << "New connection accepted" << std::endl;
+	debug("New user connected. Socket fd: " << clientFd);
 }
 
 void Server::receiveClientMessage(Client *client)
 {
 	char buffer[RECV_BUFFER_SIZE + 1];
-	int bytesRead = 0;
+	ssize_t bytesRead = 0;
 	bool disconnected = false;
-
 	do {
 		bytesRead = recv(client->getSocketFd(), buffer, RECV_BUFFER_SIZE, 0);
 		if (bytesRead == -1) {
 			client->setLocalBuffer("");
-			std::cerr << "Error while receiving data from client." << std::endl;
+			std::cerr << "Error while receiving data from client fd[" << client->getSocketFd() << "]." << std::endl;
 			return;
 		}
 		buffer[bytesRead] = 0;
 		if (bytesRead == 0 && client->getLocalBuffer().empty()) {
-			// TODO: find a way to disconnect client
-			//std::cerr << "Client disconnected." << std::endl;
-			//disconnected = true;
+			disconnected = true;
 			break;
 		}
 		client->setLocalBuffer(client->getLocalBuffer() + buffer);
 	} while (bytesRead > 0);
+
 	if (disconnected) {
 		client->setState(CS_DISCONNECTED);
 		return;
 	}
 }
 
-// PUBLIC METHODS -------------------------------------------------------------
-
 bool Server::tryToRunClientCommand(Client *client)
 {
-	bool atleastOneCommand = false;
+	int commandCount = 0;
 	std::string endDelimiter = "\r\n";
 	size_t pos;
 
@@ -126,30 +122,63 @@ bool Server::tryToRunClientCommand(Client *client)
 	while (pos != std::string::npos) {
 		std::string command = client->getLocalBuffer().substr(0, pos);
 		client->setLocalBuffer(client->getLocalBuffer().substr(pos+endDelimiter.size()));
-		atleastOneCommand = true;
 
 		// Get command name
 		size_t firstSpace = command.find(' ');
 		if (firstSpace == std::string::npos) {
-			std::cerr << "Invalid command received from client." << std::endl;
-			// TODO: send error message
-			return false;
+			debug("Received incomplete command from client[" << client->getSocketFd() << "]. command=" << command);
+			pos = client->getLocalBuffer().find(endDelimiter);
+			firstSpace = command.size() - 1;
 		}
 		std::string commandName = command.substr(0, firstSpace);
 		command = command.substr(firstSpace+1);
 		if (this->commands.find(commandName) == this->commands.end()) {
-			std::cerr << "Unknown command received from client." << std::endl;
+			debug("Unknown command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", command=" << command);
 			// TODO: send error message
-			return false;
+			pos = client->getLocalBuffer().find(endDelimiter);
+			continue;
 		}
+		commandCount++;
 		CmdInterface *cmd = this->commands[commandName];
+		debug("Command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args(not parsed)=" << command);
 
 		// Get command parameters (may be different for some commands (e.g. PASS))
 		std::vector<std::string> params = cmd->parseArgs(command);
+		debug("Command parameters received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args(parsed)=" << params);
 
 		cmd->run(*client, params);
+		debug("Command execution finished for client[" << client->getSocketFd() << "]. Commands found=" << commandCount);
+		pos = client->getLocalBuffer().find(endDelimiter);
 	};
-	return atleastOneCommand;
+	debug("Command parsing finished. Commands found=" << commandCount);
+	return commandCount > 0;
+}
+
+
+void Server::deleteDisconnectedClients()
+{
+	ClientsMap::iterator client = this->clients.begin();
+	while (client != this->clients.end()) {
+		if (client->second && client->second->getState() == CS_DISCONNECTED) {
+			debug("FD[" << client->first << "] Client disconnected. Deleting client...");
+			// Close socket && delete client
+			close(client->first);
+			delete client->second;
+			client->second = NULL;
+
+			// Delete pollfd
+			for (AllPollFdsVector::iterator clientPoll = this->allPollFds.begin(); clientPoll != this->allPollFds.end(); ++clientPoll) {
+				if (clientPoll->fd == client->first) {
+					this->allPollFds.erase(clientPoll);
+					break;
+				}
+			}
+			this->clients.erase(client++);
+			// TODO: remove client from it's channels
+		} else {
+			client++;
+		}
+	}
 }
 
 // CONSTRUCTOR
@@ -173,6 +202,7 @@ Server::Server(const std::string& host, const std::string& port, const std::stri
 	this->host = host;
 
 	this->maxConnections = IRC_MAX_CONNECTIONS;
+	debug("Server configured with host=" << this->host << ", port=" << this->port << ", password=" << this->password << ", maxConnections=" << this->maxConnections);
 }
 
 // DESTRUCTOR
@@ -189,6 +219,8 @@ Server::~Server()
 	this->clients.clear();
 }
 
+// PUBLIC METHODS -------------------------------------------------------------
+
 // START SERVER
 void Server::run()
 {
@@ -199,30 +231,41 @@ void Server::run()
 	SERVER_RUNNING = true;
 	std::cout << "Server running on port " << this->port << "... Press Ctrl+C to stop." << std::endl;
 	while (SERVER_RUNNING) {
+
 		// - accept
 		// - parse
 		// - run
 		// - send
 		// ?
 
-		if (this->serverPollFd.revents == POLLIN) {
+		// Wait for events (timeout of 1000ms)
+		if (poll(this->allPollFds.data(), this->allPollFds.size(), 1000) < 0) {
+			if (!SERVER_RUNNING) break;
+			throw ServerException("Poll failed");
+		}
+
+		if (this->allPollFds[0].revents & POLLIN) {
 			this->acceptConnection();
 		} else {
-			for (ClientPollVector::iterator clientPoll = this->clientPollFds.begin(); clientPoll != this->clientPollFds.end(); ++clientPoll) {
-				if (clientPoll->events == POLLIN) {
-					// receive && parse message
-					this->receiveClientMessage(this->clients[clientPoll->fd]);
-					this->tryToRunClientCommand(this->clients[clientPoll->fd]);
+			for (AllPollFdsVector::iterator clientPoll = this->allPollFds.begin(); clientPoll != this->allPollFds.end(); ++clientPoll) {
+				if (clientPoll->revents & (POLLIN | POLLHUP | POLLERR)) {
+					if (clientPoll->revents & (POLLHUP | POLLERR)) {
+						// Client disconnected forcefully (CTRL+C, etc.)
+						if (this->clients.find(clientPoll->fd) != this->clients.end()) {
+							this->clients[clientPoll->fd]->setState(CS_DISCONNECTED);
+						}
+					}
+					else if (clientPoll->revents & POLLIN) {
+						// receive && parse message
+						debug("Receiving message from fd[" << clientPoll->fd << "]...");
+						this->receiveClientMessage(this->clients[clientPoll->fd]);
+						this->tryToRunClientCommand(this->clients[clientPoll->fd]);
+					}
 				}
 			}
 		}
 		//Remove disconnected clients
-		for (ClientsMap::iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
-			if (it->second->getState() == CS_DISCONNECTED) {
-				delete it->second;
-				this->clients.erase(it);
-			}
-		}
+		this->deleteDisconnectedClients();
 	}
 }
 // EXCEPTIONS -----------------------------------------------------------------

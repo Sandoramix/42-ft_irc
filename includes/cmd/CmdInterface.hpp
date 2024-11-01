@@ -6,6 +6,7 @@
 
 class CmdInterface;
 
+#include "IRCUtils.hpp"
 #include "Client.hpp"
 #include "Server.hpp"
 

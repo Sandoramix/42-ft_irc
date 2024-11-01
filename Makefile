@@ -1,7 +1,9 @@
 NAME:=ircserv
 
+DEBUG:=true
+
 CXX:=clang++
-CXXFLAGS:=-std=c++98 -Wall -Wextra -Werror -g -I./includes
+CXXFLAGS:=-std=c++98 -Wall -Wextra -Werror -g -DDEBUG=$(DEBUG) -I./includes
 
 SRC = ./src/Client.cpp \
 	./src/Server.cpp \
@@ -36,6 +38,7 @@ getsrc:
 	@curl 'https://raw.githubusercontent.com/Sandoramix/42cursus/master/utils/getSrc.py' | python3 - -ext cpp
 
 re: fclean all
+re-valgrind: fclean all valgrind
 
 .PHONY: all clean fclean re getsrc
 .SILENT:
