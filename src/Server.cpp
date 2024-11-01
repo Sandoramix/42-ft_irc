@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <cerrno>
 #include "Server.hpp"
 
 #include "cmd/InviteCmd.hpp"
@@ -28,11 +29,11 @@ void Server::startListening()
 	}
 
 	int optval = 1;
-	if (setsockopt(this->socketFd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) != 0) {
+	if (setsockopt(this->socketFd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval))!=0) {
 		throw ServerException("Failed to set socket option");
 	}
 
-	if (fcntl(this->socketFd, F_SETFL, O_NONBLOCK) == -1) {
+	if (fcntl(this->socketFd, F_SETFL, O_NONBLOCK)==-1) {
 		throw ServerException("Failed to set socket as non-blocking");
 	}
 
@@ -40,11 +41,10 @@ void Server::startListening()
 	this->socketAddr.sin_addr.s_addr = inet_addr(this->host.c_str());
 	this->socketAddr.sin_port = htons(this->port);
 
-
-	if (bind(this->socketFd, (struct sockaddr*)&this->socketAddr, sizeof(this->socketAddr)) < 0) {
+	if (bind(this->socketFd, (struct sockaddr*)&this->socketAddr, sizeof(this->socketAddr))<0) {
 		throw ServerException("Failed to bind socket");
 	}
-	if (listen(this->socketFd, (int)this->maxConnections) < 0){
+	if (listen(this->socketFd, (int)this->maxConnections)<0) {
 		throw ServerException("Failed to listen on socket");
 	}
 
@@ -57,23 +57,23 @@ void Server::startListening()
 void Server::acceptConnection()
 {
 	// Check if server is full: if the users don't exceed the maxConnections.
-	if (this->clients.size() >= this->maxConnections) {
+	if (this->clients.size()>=this->maxConnections) {
 		std::cerr << "Server is full: cannot accept new connection." << std::endl;
 		return;
 	}
 
 	SocketAddrIn addr;
 	socklen_t addr_len = sizeof(addr);
-	int clientFd = accept(this->socketFd, (SocketAddr *)&addr, &addr_len);
-	if (clientFd == -1) {
+	int clientFd = accept(this->socketFd, (SocketAddr*)&addr, &addr_len);
+	if (clientFd==-1) {
 		std::cerr << "Someone tried to connect but the `accept` failed..." << std::endl;
 		return;
 	}
-	if (fcntl(clientFd, F_SETFL, O_NONBLOCK) == -1) {
+	if (fcntl(clientFd, F_SETFL, O_NONBLOCK)==-1) {
 		std::cerr << "Could not accept a new user because an error occurred when trying to set the socket as non-blocking" << std::endl;
 		return;
 	}
-	if (this->clients.find(clientFd) != this->clients.end()) {
+	if (this->clients.find(clientFd)!=this->clients.end()) {
 		delete this->clients[clientFd];
 	}
 	this->clients[clientFd] = new Client(clientFd);
@@ -85,25 +85,27 @@ void Server::acceptConnection()
 	debug("New user connected. Socket fd: " << clientFd);
 }
 
-void Server::receiveClientMessage(Client *client)
+void Server::receiveClientMessage(Client* client)
 {
-	char buffer[RECV_BUFFER_SIZE + 1];
+	char buffer[RECV_BUFFER_SIZE+1];
 	ssize_t bytesRead = 0;
 	bool disconnected = false;
-	do {
-		bytesRead = recv(client->getSocketFd(), buffer, RECV_BUFFER_SIZE, 0);
-		if (bytesRead == -1) {
-			client->setLocalBuffer("");
-			std::cerr << "Error while receiving data from client fd[" << client->getSocketFd() << "]." << std::endl;
-			return;
-		}
+
+	bytesRead = recv(client->getSocketFd(), buffer, RECV_BUFFER_SIZE, 0);
+	if (bytesRead>0) {
 		buffer[bytesRead] = 0;
-		if (bytesRead == 0 && client->getLocalBuffer().empty()) {
+		client->setLocalBuffer(client->getLocalBuffer()+buffer);
+	}
+	else if (bytesRead==0) {
+		// Client closed connection
+		disconnected = true;
+	}
+	else if (bytesRead==-1) {
+		if (errno!=EAGAIN && errno!=EWOULDBLOCK) {
+			debug("Error in recv() for client[" << client->getSocketFd() << "]");
 			disconnected = true;
-			break;
 		}
-		client->setLocalBuffer(client->getLocalBuffer() + buffer);
-	} while (bytesRead > 0);
+	}
 
 	if (disconnected) {
 		client->setState(CS_DISCONNECTED);
@@ -111,55 +113,59 @@ void Server::receiveClientMessage(Client *client)
 	}
 }
 
-bool Server::tryToRunClientCommand(Client *client)
+bool Server::tryToRunClientCommand(Client* client)
 {
 	int commandCount = 0;
-	std::string endDelimiter = "\r\n";
+	std::string endDelimiters = "\n";
 	size_t pos;
 
+	if (client->getState()==CS_DISCONNECTED) {
+		return false;
+	}
 
-	pos = client->getLocalBuffer().find(endDelimiter);
-	while (pos != std::string::npos) {
-		std::string command = client->getLocalBuffer().substr(0, pos);
-		client->setLocalBuffer(client->getLocalBuffer().substr(pos+endDelimiter.size()));
+	pos = client->getLocalBuffer().find_first_of(endDelimiters);
+	while (pos!=std::string::npos) {
+		std::string commandName;
+		std::string commandArgs = client->getLocalBuffer().substr(0, pos);
+		client->setLocalBuffer(client->getLocalBuffer().substr(pos+endDelimiters.size()));
 
 		// Get command name
-		size_t firstSpace = command.find(' ');
-		if (firstSpace == std::string::npos) {
-			debug("Received incomplete command from client[" << client->getSocketFd() << "]. command=" << command);
-			pos = client->getLocalBuffer().find(endDelimiter);
-			firstSpace = command.size() - 1;
+		size_t firstSpace = commandArgs.find(' ');
+		if (firstSpace==std::string::npos) {
+			commandName = commandArgs;
+			commandArgs = "";
 		}
-		std::string commandName = command.substr(0, firstSpace);
-		command = command.substr(firstSpace+1);
-		if (this->commands.find(commandName) == this->commands.end()) {
-			debug("Unknown command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", command=" << command);
-			// TODO: send error message
-			pos = client->getLocalBuffer().find(endDelimiter);
+		else {
+			commandName = commandArgs.substr(0, firstSpace);
+			commandArgs = commandArgs.substr(firstSpace+1);
+		}
+		if (this->commands.find(commandName)==this->commands.end()) {
+			debug("Unknown command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", command=" << commandArgs);
+			// TODO: send error message to client
+			pos = client->getLocalBuffer().find(endDelimiters);
 			continue;
 		}
 		commandCount++;
-		CmdInterface *cmd = this->commands[commandName];
-		debug("Command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args(not parsed)=" << command);
+		CmdInterface* cmd = this->commands[commandName];
+		debug("Command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args(not parsed)=" << commandArgs);
 
 		// Get command parameters (may be different for some commands (e.g. PASS))
-		std::vector<std::string> params = cmd->parseArgs(command);
+		std::vector<std::string> params = cmd->parseArgs(commandArgs);
 		debug("Command parameters received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args(parsed)=" << params);
 
 		cmd->run(*client, params);
 		debug("Command execution finished for client[" << client->getSocketFd() << "]. Commands found=" << commandCount);
-		pos = client->getLocalBuffer().find(endDelimiter);
+		pos = client->getLocalBuffer().find_first_of(endDelimiters);
 	};
 	debug("Command parsing finished. Commands found=" << commandCount);
-	return commandCount > 0;
+	return commandCount>0;
 }
-
 
 void Server::deleteDisconnectedClients()
 {
 	ClientsMap::iterator client = this->clients.begin();
-	while (client != this->clients.end()) {
-		if (client->second && client->second->getState() == CS_DISCONNECTED) {
+	while (client!=this->clients.end()) {
+		if (client->second && client->second->getState()==CS_DISCONNECTED) {
 			debug("FD[" << client->first << "] Client disconnected. Deleting client...");
 			// Close socket && delete client
 			close(client->first);
@@ -167,15 +173,16 @@ void Server::deleteDisconnectedClients()
 			client->second = NULL;
 
 			// Delete pollfd
-			for (AllPollFdsVector::iterator clientPoll = this->allPollFds.begin(); clientPoll != this->allPollFds.end(); ++clientPoll) {
-				if (clientPoll->fd == client->first) {
+			for (AllPollFdsVector::iterator clientPoll = this->allPollFds.begin(); clientPoll!=this->allPollFds.end(); ++clientPoll) {
+				if (clientPoll->fd==client->first) {
 					this->allPollFds.erase(clientPoll);
 					break;
 				}
 			}
 			this->clients.erase(client++);
 			// TODO: remove client from it's channels
-		} else {
+		}
+		else {
 			client++;
 		}
 	}
@@ -239,19 +246,20 @@ void Server::run()
 		// ?
 
 		// Wait for events (timeout of 1000ms)
-		if (poll(this->allPollFds.data(), this->allPollFds.size(), 1000) < 0) {
+		if (poll(this->allPollFds.data(), this->allPollFds.size(), 1000)<0) {
 			if (!SERVER_RUNNING) break;
 			throw ServerException("Poll failed");
 		}
 
 		if (this->allPollFds[0].revents & POLLIN) {
 			this->acceptConnection();
-		} else {
-			for (AllPollFdsVector::iterator clientPoll = this->allPollFds.begin(); clientPoll != this->allPollFds.end(); ++clientPoll) {
+		}
+		else {
+			for (AllPollFdsVector::iterator clientPoll = this->allPollFds.begin(); clientPoll!=this->allPollFds.end(); ++clientPoll) {
 				if (clientPoll->revents & (POLLIN | POLLHUP | POLLERR)) {
 					if (clientPoll->revents & (POLLHUP | POLLERR)) {
 						// Client disconnected forcefully (CTRL+C, etc.)
-						if (this->clients.find(clientPoll->fd) != this->clients.end()) {
+						if (this->clients.find(clientPoll->fd)!=this->clients.end()) {
 							this->clients[clientPoll->fd]->setState(CS_DISCONNECTED);
 						}
 					}

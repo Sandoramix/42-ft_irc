@@ -2,6 +2,7 @@ NAME:=ircserv
 
 DEBUG:=true
 
+
 CXX:=clang++
 CXXFLAGS:=-std=c++98 -Wall -Wextra -Werror -g -DDEBUG=$(DEBUG) -I./includes
 

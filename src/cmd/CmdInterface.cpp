@@ -16,14 +16,18 @@ void CmdInterface::run(const Client& requestedFrom, const std::vector<std::strin
 
 std::vector<std::string> CmdInterface::parseArgs(const std::string &argsWithoutCommand)
 {
+	std::string copy(argsWithoutCommand);
 	std::vector<std::string> args;
 
-	size_t prev = 0, pos = 0;
-	pos = argsWithoutCommand.find(' ', prev);
+	size_t pos = 0;
+	pos = copy.find(' ', 0);
 	while (pos != std::string::npos) {
-		args.push_back(argsWithoutCommand.substr(prev, pos-prev));
-		prev = pos+1;
-		pos = argsWithoutCommand.find(' ', prev);
+		args.push_back(copy.substr(0, pos));
+		copy = copy.substr(pos+1);
+		pos = copy.find(' ', 0);
+	}
+	if (!copy.empty()) {
+		args.push_back(copy);
 	}
 	return args;
 }
