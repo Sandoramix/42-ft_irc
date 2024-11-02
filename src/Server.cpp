@@ -9,6 +9,44 @@
 #include "cmd/TopicCmd.hpp"
 
 
+// CONSTRUCTOR
+Server::Server(const std::string& host, const std::string& port, const std::string& password)
+{
+	// PORT VALIDATION
+	if (port.empty()) { throw BadConfigException("Invalid port: empty string."); }
+	char* end;
+	long port_l = strtol(port.c_str(), &end, 10);
+	if (end==port.c_str() || *end!='\0') { throw BadConfigException("Invalid port: not a number."); }
+	if (port_l<1 || port_l>65535) { throw BadConfigException("Invalid port: out of range."); }
+
+	this->port = static_cast<unsigned short>(port_l);
+
+	// PASSWORD VALIDATION
+	if (password.empty()) { throw BadConfigException("Invalid password: empty string."); }
+	this->password = password;
+
+	// HOST VALIDATION
+	if (host.empty()) { throw BadConfigException("Invalid host: empty string."); }
+	this->host = host;
+
+	this->maxConnections = IRC_MAX_CONNECTIONS;
+	debug("Server configured with host=" << this->host << ", port=" << this->port << ", password=" << this->password << ", maxConnections=" << this->maxConnections);
+}
+
+// DESTRUCTOR
+Server::~Server()
+{
+	for (ServerCommandsMap::iterator it = this->commands.begin(); it!=this->commands.end(); ++it) {
+		delete it->second;
+	}
+	this->commands.clear();
+
+	for (ClientsMap::iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
+		delete it->second;
+	}
+	this->clients.clear();
+}
+
 // PRIVATE METHODS ------------------------------------------------------------
 
 void Server::initCommands()
@@ -64,7 +102,8 @@ void Server::acceptConnection()
 
 	SocketAddrIn addr;
 	socklen_t addr_len = sizeof(addr);
-	int clientFd = accept(this->socketFd, (SocketAddr*)&addr, &addr_len);
+
+	SocketFd clientFd = accept(this->socketFd, (SocketAddr*)&addr, &addr_len);
 	if (clientFd==-1) {
 		std::cerr << "Someone tried to connect but the `accept` failed..." << std::endl;
 		return;
@@ -161,6 +200,36 @@ bool Server::tryToRunClientCommand(Client* client)
 	return commandCount>0;
 }
 
+bool Server::sendMessageToClient(Client* client, const std::string& message) const
+{
+	std::string messageToSend = message+"\r\n";
+	ssize_t bytesWritten = send(client->getSocketFd(), messageToSend.c_str(), messageToSend.size(), 0);
+	if (bytesWritten<0 || (size_t)bytesWritten!=messageToSend.size()) {
+		debug("Error while sending message to client[" << client->getSocketFd() << "]. Message=" << message);
+//		std::cerr << "Error occurred while sending message to client[" << client->getSocketFd() << "]" << std::endl;
+		return false;
+	}
+	return true;
+}
+
+bool Server::sendMessageToChannel(Channel* channel, const std::string& message) const
+{
+	// TODO: add checks for channel permissions and so on.
+	if (!channel){
+		return false;
+	}
+	ClientsVector channelClients = channel->getAllClients();
+	bool error = false;
+	for (ClientsVector::iterator it = channelClients.begin(); it!=channelClients.end(); ++it) {
+		bool sent = this->sendMessageToClient(*it, message);
+		if (!sent) {
+			debug("Error while sending message to channel[" << channel->getName() << "]. Client[" << (*it)->getSocketFd() << "]");
+			error = true;
+		}
+	}
+	return !error;
+}
+
 void Server::deleteDisconnectedClients()
 {
 	ClientsMap::iterator client = this->clients.begin();
@@ -186,44 +255,6 @@ void Server::deleteDisconnectedClients()
 			client++;
 		}
 	}
-}
-
-// CONSTRUCTOR
-Server::Server(const std::string& host, const std::string& port, const std::string& password)
-{
-	// PORT VALIDATION
-	if (port.empty()) { throw BadConfigException("Invalid port: empty string."); }
-	char* end;
-	long port_l = strtol(port.c_str(), &end, 10);
-	if (end==port.c_str() || *end!='\0') { throw BadConfigException("Invalid port: not a number."); }
-	if (port_l<1 || port_l>65535) { throw BadConfigException("Invalid port: out of range."); }
-
-	this->port = static_cast<unsigned short>(port_l);
-
-	// PASSWORD VALIDATION
-	if (password.empty()) { throw BadConfigException("Invalid password: empty string."); }
-	this->password = password;
-
-	// HOST VALIDATION
-	if (host.empty()) { throw BadConfigException("Invalid host: empty string."); }
-	this->host = host;
-
-	this->maxConnections = IRC_MAX_CONNECTIONS;
-	debug("Server configured with host=" << this->host << ", port=" << this->port << ", password=" << this->password << ", maxConnections=" << this->maxConnections);
-}
-
-// DESTRUCTOR
-Server::~Server()
-{
-	for (ServerCommandsMap::iterator it = this->commands.begin(); it!=this->commands.end(); ++it) {
-		delete it->second;
-	}
-	this->commands.clear();
-
-	for (ClientsMap::iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
-		delete it->second;
-	}
-	this->clients.clear();
 }
 
 // PUBLIC METHODS -------------------------------------------------------------
@@ -276,6 +307,7 @@ void Server::run()
 		this->deleteDisconnectedClients();
 	}
 }
+
 // EXCEPTIONS -----------------------------------------------------------------
 
 // BAD CONFIG EXCEPTION

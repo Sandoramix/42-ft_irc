@@ -2,14 +2,27 @@
 #define CLIENT_HPP
 #include <string>
 #include <vector>
+#include <map>
 
 #include "IRCUtils.hpp"
+
+class Client;
+typedef std::map<SocketFd, Client*> ClientsMap;
+typedef std::vector<Client*> ClientsVector;
+
+#include "IRCUtils.hpp"
+#include "Channel.hpp"
 #include "cmd/CmdInterface.hpp"
+
 
 typedef std::vector<CmdInterface *> ClientCommandsQueue;
 
 enum ClientState {
-	CS_AUTHENTICATING,
+	CS_UNKNOWN,
+	CS_CONNECTED,
+	CS_PASS_SENT,
+	CS_NICK_SENT,
+	CS_USERNAME_SENT,
 	CS_AUTHENTICATED,
 	CS_DISCONNECTED
 	//... ?
@@ -26,9 +39,12 @@ private:
 	std::string nickname;
 	std::string username;
 	std::string password;
-//...
 
+private:
+	Client(const Client&);
+	Client& operator=(const Client&);
 public:
+	Client();
 	Client(const int& socketFd);
 	~Client();
 

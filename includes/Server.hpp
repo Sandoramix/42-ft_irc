@@ -7,33 +7,18 @@
 #  define RECV_BUFFER_SIZE 1024
 # endif
 
-#include <exception>
-#include <iostream>
-#include <string>
-#include <map>
-#include <csignal>
-#include <cstdlib>
-#include <fcntl.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <poll.h>
-
+extern bool SERVER_RUNNING;
 
 class Server;
 class Client;
+
 #include "IRCUtils.hpp"
 #include "cmd/CmdInterface.hpp"
 #include "Client.hpp"
+#include "Channel.hpp"
 
-typedef struct sockaddr SocketAddr;
-typedef struct sockaddr_in SocketAddrIn;
-typedef struct pollfd PollFd;
-
-typedef std::map<int, Client*> ClientsMap;
 typedef std::map<const std::string, CmdInterface*> ServerCommandsMap;
-typedef std::vector<PollFd> AllPollFdsVector;
 
-extern bool SERVER_RUNNING;
 
 class Server {
 // Assignable from outside
@@ -51,7 +36,7 @@ private:
 	ServerCommandsMap commands;
 
 	/// Socket file descriptor
-	int socketFd;
+	SocketFd socketFd;
 	/// Socket address
 	SocketAddrIn socketAddr;
 	/// polling fds
@@ -73,6 +58,12 @@ private:
 
 	/// Delete disconnected clients
 	void deleteDisconnectedClients();
+
+	/// Send a message to the client
+	bool sendMessageToClient(Client* client, const std::string& message) const;
+
+	bool sendMessageToChannel(Channel *channel, const std::string& message) const;
+
 public:
 	Server(const std::string& host, const std::string& port, const std::string& password);
 	~Server();

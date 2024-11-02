@@ -1,14 +1,30 @@
 #include "Client.hpp"
+Client::Client(const Client& other)
+		:socketFd(other.socketFd), state(other.state), localBuffer(other.localBuffer), hostname(other.hostname),
+		 nickname(other.nickname), username(other.username), password(other.password) { }
 
+Client& Client::operator=(const Client& other)
+{
+	if (this!=&other) {
+		this->socketFd = other.socketFd;
+		this->state = other.state;
+		this->localBuffer = other.localBuffer;
+		this->hostname = other.hostname;
+		this->nickname = other.nickname;
+		this->username = other.username;
+		this->password = other.password;
+	}
+	return *this;
+}
+Client::Client()
+		:state(CS_UNKNOWN) { }
 Client::Client(const int& socketFd)
-		:socketFd(socketFd), state(CS_AUTHENTICATING)
+		:socketFd(socketFd), state(CS_UNKNOWN)
 {
 
 }
 
-Client::~Client()
-{
-}
+Client::~Client() { }
 
 bool Client::isAuthenticated() const { return (this->state==CS_AUTHENTICATED); }
 
@@ -29,3 +45,4 @@ void Client::setHostname(const std::string& hostname) { this->hostname = hostnam
 void Client::setNickname(const std::string& nickname) { this->nickname = nickname; }
 void Client::setUsername(const std::string& username) { this->username = username; }
 void Client::setPassword(const std::string& password) { this->password = password; }
+

@@ -6,7 +6,8 @@ DEBUG:=true
 CXX:=clang++
 CXXFLAGS:=-std=c++98 -Wall -Wextra -Werror -g -DDEBUG=$(DEBUG) -I./includes
 
-SRC = ./src/Client.cpp \
+SRC = ./src/Channel.cpp \
+	./src/Client.cpp \
 	./src/Server.cpp \
 	./src/cmd/CmdInterface.cpp \
 	./src/cmd/InviteCmd.cpp \
