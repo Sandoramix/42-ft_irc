@@ -152,22 +152,37 @@ void Server::receiveClientMessage(Client* client)
 	}
 }
 
+static void findNextDelimiter(const std::string& str, size_t& pos, size_t& delimSize)
+{
+	std::string unixEndDelimiter = "\r\n";
+	std::string windowsEndDelimiter = "\n";
+	delimSize = unixEndDelimiter.size();
+
+	pos = str.find(unixEndDelimiter);
+	delimSize = unixEndDelimiter.size();
+	if (pos==std::string::npos) {
+		pos = str.find(windowsEndDelimiter);
+		delimSize = windowsEndDelimiter.size();
+	}
+}
+
 bool Server::tryToRunClientCommand(Client* client)
 {
 	int commandCount = 0;
-	// Konversation uses \n as delimiter, but some clients use \r\n (like HexChat)
-	std::string endDelimiters = "\n";
+
 	size_t pos;
+	size_t delimSize;
 
 	if (client->getState()==CS_DISCONNECTED) {
 		return false;
 	}
 
-	pos = client->getLocalBuffer().find(endDelimiters);
+	findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
+
 	while (pos!=std::string::npos) {
 		std::string commandName;
 		std::string commandArgs = client->getLocalBuffer().substr(0, pos);
-		client->setLocalBuffer(client->getLocalBuffer().substr(pos+endDelimiters.size()));
+		client->setLocalBuffer(client->getLocalBuffer().substr(pos+delimSize));
 
 		// Get command name
 		size_t firstSpace = commandArgs.find(' ');
@@ -182,7 +197,7 @@ bool Server::tryToRunClientCommand(Client* client)
 		if (this->commands.find(commandName)==this->commands.end()) {
 			debug("Unknown command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", command=" << commandArgs);
 			// TODO: send error message to client
-			pos = client->getLocalBuffer().find(endDelimiters);
+			findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 			continue;
 		}
 		commandCount++;
@@ -195,7 +210,7 @@ bool Server::tryToRunClientCommand(Client* client)
 
 		cmd->run(*client, params);
 		debug("Command execution finished for client[" << client->getSocketFd() << "]. Commands found=" << commandCount);
-		pos = client->getLocalBuffer().find(endDelimiters);
+		findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 	};
 	debug("Command parsing finished. Commands found=" << commandCount);
 	return commandCount>0;
