@@ -50,6 +50,10 @@ public:
 
 	bool isAuthenticated() const;
 
+public:
+	bool sendMessage(const std::string& message) const;
+
+
 /// GETTERS/SETTERS
 public:
 	const int& getSocketFd() const;

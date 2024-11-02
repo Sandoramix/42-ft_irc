@@ -20,14 +20,23 @@ Client::Client()
 		:state(CS_UNKNOWN) { }
 Client::Client(const int& socketFd)
 		:socketFd(socketFd), state(CS_UNKNOWN)
-{
-
-}
+{}
 
 Client::~Client() { }
 
 bool Client::isAuthenticated() const { return (this->state==CS_AUTHENTICATED); }
 
+bool Client::sendMessage(const std::string& message) const
+{
+	std::string messageToSend = message+"\r\n";
+	ssize_t bytesWritten = send(this->getSocketFd(), messageToSend.c_str(), messageToSend.size(), 0);
+	if (bytesWritten<0 || (size_t)bytesWritten != messageToSend.size()) {
+		debug("Error while sending message to client[" << this->getSocketFd() << "]. Message=" << message);
+//		std::cerr << "Error occurred while sending message to client[" << client->getSocketFd() << "]" << std::endl;
+		return false;
+	}
+	return true;
+}
 // GETTERS/SETTERS ------------------------------------------------------------
 
 const int& Client::getSocketFd() const { return socketFd; }
@@ -45,4 +54,5 @@ void Client::setHostname(const std::string& hostname) { this->hostname = hostnam
 void Client::setNickname(const std::string& nickname) { this->nickname = nickname; }
 void Client::setUsername(const std::string& username) { this->username = username; }
 void Client::setPassword(const std::string& password) { this->password = password; }
+
 

@@ -155,6 +155,7 @@ void Server::receiveClientMessage(Client* client)
 bool Server::tryToRunClientCommand(Client* client)
 {
 	int commandCount = 0;
+	// Konversation uses \n as delimiter, but some clients use \r\n (like HexChat)
 	std::string endDelimiters = "\n";
 	size_t pos;
 
@@ -162,7 +163,7 @@ bool Server::tryToRunClientCommand(Client* client)
 		return false;
 	}
 
-	pos = client->getLocalBuffer().find_first_of(endDelimiters);
+	pos = client->getLocalBuffer().find(endDelimiters);
 	while (pos!=std::string::npos) {
 		std::string commandName;
 		std::string commandArgs = client->getLocalBuffer().substr(0, pos);
@@ -194,7 +195,7 @@ bool Server::tryToRunClientCommand(Client* client)
 
 		cmd->run(*client, params);
 		debug("Command execution finished for client[" << client->getSocketFd() << "]. Commands found=" << commandCount);
-		pos = client->getLocalBuffer().find_first_of(endDelimiters);
+		pos = client->getLocalBuffer().find(endDelimiters);
 	};
 	debug("Command parsing finished. Commands found=" << commandCount);
 	return commandCount>0;
@@ -202,14 +203,8 @@ bool Server::tryToRunClientCommand(Client* client)
 
 bool Server::sendMessageToClient(Client* client, const std::string& message) const
 {
-	std::string messageToSend = message+"\r\n";
-	ssize_t bytesWritten = send(client->getSocketFd(), messageToSend.c_str(), messageToSend.size(), 0);
-	if (bytesWritten<0 || (size_t)bytesWritten!=messageToSend.size()) {
-		debug("Error while sending message to client[" << client->getSocketFd() << "]. Message=" << message);
-//		std::cerr << "Error occurred while sending message to client[" << client->getSocketFd() << "]" << std::endl;
-		return false;
-	}
-	return true;
+	if (!client) { return false; }
+	return client->sendMessage(message);
 }
 
 bool Server::sendMessageToChannel(Channel* channel, const std::string& message) const
