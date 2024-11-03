@@ -41,20 +41,18 @@ bool ResponseMsg::isHostnameSet()
 
 std::string ResponseMsg::errorResponse(ResponseCode code, const std::string& target)
 {
-	if (!isHostnameSet()) {
-		return std::string();
-	}
+	std::string host = isHostnameSet() ? hostname : "*";
 	std::stringstream ss;
-	ss << ":" << hostname << " " << code << " " << (target.empty() ? "*" : target) << " " << getDefaultMessage(code);
+
+	ss << ":" << host << " " << code << " " << (target.empty() ? "*" : target) << " :" << getDefaultMessage(code);
 	return ss.str();
 }
 
 std::string ResponseMsg::errorResponse(ResponseCode code, const std::string& target, const std::string& message)
 {
-	if (!isHostnameSet()) {
-		return std::string();
-	}
+	std::string host = isHostnameSet() ? hostname : "*";
 	std::stringstream ss;
-	ss << ":" << hostname << " " << code << " " << (target.empty() ? "*" : target) << " " << message;
+
+	ss << ":" << host << " " << code << " " << (target.empty() ? "*" : target) << " :" << message;
 	return ss.str();
 }

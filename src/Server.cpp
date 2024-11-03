@@ -104,7 +104,7 @@ void Server::startListening()
 	this->allPollFds.push_back(pollfd());
 	this->allPollFds.back().fd = this->socketFd;
 	this->allPollFds.back().events = POLLIN;
-	debug("Socket created && bound && listening. Socket fd: " << this->socketFd);
+	debugInfo("Socket created && bound && listening. Socket fd: " << this->socketFd);
 }
 
 void Server::acceptConnection()
@@ -156,7 +156,7 @@ void Server::receiveClientMessage(Client* client)
 	}
 	else if (bytesRead==-1) {
 		if (errno!=EAGAIN && errno!=EWOULDBLOCK) {
-			debug("Error in recv() for client[" << client->getSocketFd() << "]");
+			debugError("Error in recv() for client[" << client->getSocketFd() << "]");
 			disconnected = true;
 		}
 	}
@@ -192,6 +192,8 @@ bool Server::tryToRunClientCommand(Client* client)
 		return false;
 	}
 
+	debug("Command parsing started for client[" << client->getSocketFd() << "]. Buffer=\"" << client->getLocalBuffer() << "\"");
+
 	findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 
 	while (pos!=std::string::npos) {
@@ -210,8 +212,10 @@ bool Server::tryToRunClientCommand(Client* client)
 			commandArgs = commandArgs.substr(firstSpace+1);
 		}
 		if (this->commands.find(commandName)==this->commands.end()) {
+			client->sendMessage(ResponseMsg::errorResponse(ERR_UNKNOWNCOMMAND, client->getNickname()));
+
 			debug("Unknown command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", command=" << commandArgs);
-			// TODO: send error message to client
+
 			findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 			continue;
 		}
@@ -220,12 +224,12 @@ bool Server::tryToRunClientCommand(Client* client)
 
 		// Get command parameters (may be different for some commands (e.g. PASS))
 		std::vector<std::string> params = cmd->parseArgs(commandArgs);
-		debug("Command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args=" << params);
+		debug("Command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args=" << params << "(size=" << params.size() << ")");
 
 		cmd->run(*client, params);
 		findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 	};
-	debug("Command parsing finished. Commands found=" << commandCount);
+	debug("Command parsing finished for client[" << client->getSocketFd() << "]. Commands found=" << commandCount);
 	return commandCount>0;
 }
 
