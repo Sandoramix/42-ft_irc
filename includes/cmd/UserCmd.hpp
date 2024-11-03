@@ -1,17 +1,18 @@
-#ifndef FT_IRC_KICKCMD_HPP
-#define FT_IRC_KICKCMD_HPP
+#ifndef FT_IRC_USERCMD_HPP
+#define FT_IRC_USERCMD_HPP
 
 #include <string>
 #include <vector>
 #include "CmdInterface.hpp"
 
-class KickCmd : public CmdInterface {
+class UserCmd : public CmdInterface {
 public:
-	KickCmd(const Server& server);
-	~KickCmd();
+	UserCmd(const Server& server);
+	~UserCmd();
 
 public:
 	virtual void run(const Client& requestedFrom, const std::vector<std::string>& params);
+
 };
 
-#endif //FT_IRC_KICKCMD_HPP
+#endif //FT_IRC_USERCMD_HPP

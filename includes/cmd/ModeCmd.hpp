@@ -5,8 +5,7 @@
 #include <vector>
 #include "CmdInterface.hpp"
 
-class ModeCmd: public CmdInterface
-{
+class ModeCmd : public CmdInterface {
 public:
 	ModeCmd(const Server& server);
 	~ModeCmd();

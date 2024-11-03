@@ -5,8 +5,7 @@
 #include <vector>
 #include "CmdInterface.hpp"
 
-class InviteCmd: public CmdInterface
-{
+class InviteCmd : public CmdInterface {
 public:
 	InviteCmd(const Server& server);
 	~InviteCmd();

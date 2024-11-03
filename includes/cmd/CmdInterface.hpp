@@ -29,7 +29,7 @@ public:
 	virtual void run(const Client& requestedFrom, const std::vector<std::string>& params);
 
 	/// Try to parse the command arguments from the client buffer. It is virtual so that some commands can override it.
-	virtual std::vector<std::string> parseArgs(const std::string &argsWithoutCommand);
+	virtual std::vector<std::string> parseArgs(const std::string& argsWithoutCommand);
 
 protected:
 	virtual bool canUserRun(const Client& requestedFrom) const;

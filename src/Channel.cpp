@@ -68,7 +68,7 @@ bool Channel::addClient(Client* client)
 		return false;
 	}
 
-	if (this->isInviteOnly){
+	if (this->isInviteOnly) {
 		const bool wasInvited = this->isClientInvited(client);
 		if (!wasInvited) {
 			debug("Client[" << client->getSocketFd() << "] tried to join channel[" << this->name << "] but it is invite only");
@@ -137,7 +137,8 @@ bool Channel::getIsInviteOnly() const { return this->isInviteOnly; }
 bool Channel::getIsTopicReadOnly() const { return this->isTopicReadOnly; }
 
 void Channel::setName(const std::string& name) { this->name = name; }
-void Channel::setTopic(const std::string& topic) {
+void Channel::setTopic(const std::string& topic)
+{
 	// TODO: check if this is needed
 	if (this->isTopicReadOnly) {
 		debug("Channel[" << this->name << "] is read only. Cannot set topic.");

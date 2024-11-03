@@ -7,7 +7,9 @@
 #include "cmd/KickCmd.hpp"
 #include "cmd/ModeCmd.hpp"
 #include "cmd/TopicCmd.hpp"
-
+#include "cmd/PassCmd.hpp"
+#include "cmd/NickCmd.hpp"
+#include "cmd/UserCmd.hpp"
 
 // CONSTRUCTOR
 Server::Server(const std::string& host, const std::string& port, const std::string& password)
@@ -51,11 +53,16 @@ Server::~Server()
 
 void Server::initCommands()
 {
+	commands["PASS"] = new PassCmd(*this);
+	commands["NICK"] = new NickCmd(*this);
+	commands["USER"] = new UserCmd(*this);
+
 	commands["INVITE"] = new InviteCmd(*this);
 	commands["JOIN"] = new JoinCmd(*this);
 	commands["KICK"] = new KickCmd(*this);
 	commands["MODE"] = new ModeCmd(*this);
 	commands["TOPIC"] = new TopicCmd(*this);
+
 	debug("Initialized " << commands.size() << " commands.");
 }
 
@@ -202,14 +209,12 @@ bool Server::tryToRunClientCommand(Client* client)
 		}
 		commandCount++;
 		CmdInterface* cmd = this->commands[commandName];
-		debug("Command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args(not parsed)=" << commandArgs);
 
 		// Get command parameters (may be different for some commands (e.g. PASS))
 		std::vector<std::string> params = cmd->parseArgs(commandArgs);
-		debug("Command parameters received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args(parsed)=" << params);
+		debug("Command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args=" << params);
 
 		cmd->run(*client, params);
-		debug("Command execution finished for client[" << client->getSocketFd() << "]. Commands found=" << commandCount);
 		findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 	};
 	debug("Command parsing finished. Commands found=" << commandCount);
@@ -225,7 +230,7 @@ bool Server::sendMessageToClient(Client* client, const std::string& message) con
 bool Server::sendMessageToChannel(Channel* channel, const std::string& message) const
 {
 	// TODO: add checks for channel permissions and so on.
-	if (!channel){
+	if (!channel) {
 		return false;
 	}
 	ClientsVector channelClients = channel->getAllClients();

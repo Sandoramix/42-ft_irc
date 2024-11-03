@@ -19,8 +19,7 @@ Client& Client::operator=(const Client& other)
 Client::Client()
 		:state(CS_UNKNOWN) { }
 Client::Client(const int& socketFd)
-		:socketFd(socketFd), state(CS_UNKNOWN)
-{}
+		:socketFd(socketFd), state(CS_UNKNOWN) { }
 
 Client::~Client() { }
 
@@ -30,7 +29,7 @@ bool Client::sendMessage(const std::string& message) const
 {
 	std::string messageToSend = message+"\r\n";
 	ssize_t bytesWritten = send(this->getSocketFd(), messageToSend.c_str(), messageToSend.size(), 0);
-	if (bytesWritten<0 || (size_t)bytesWritten != messageToSend.size()) {
+	if (bytesWritten<0 || (size_t)bytesWritten!=messageToSend.size()) {
 		debug("Error while sending message to client[" << this->getSocketFd() << "]. Message=" << message);
 //		std::cerr << "Error occurred while sending message to client[" << client->getSocketFd() << "]" << std::endl;
 		return false;
