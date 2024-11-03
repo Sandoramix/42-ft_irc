@@ -9,7 +9,7 @@ TopicCmd::~TopicCmd()
 {
 }
 
-void TopicCmd::run(const Client& requestedFrom, const std::vector<std::string>& params)
+void TopicCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
 	(void)params;
 	(void)requestedFrom;

@@ -11,7 +11,7 @@ public:
 	~UserCmd();
 
 public:
-	virtual void run(const Client& requestedFrom, const std::vector<std::string>& params);
+	virtual void run(Client& requestedFrom, const std::vector<std::string>& params);
 
 };
 

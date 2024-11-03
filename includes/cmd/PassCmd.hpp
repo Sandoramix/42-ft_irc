@@ -11,8 +11,9 @@ public:
 	~PassCmd();
 
 public:
-	virtual void run(const Client& requestedFrom, const std::vector<std::string>& params);
+	virtual void run(Client& requestedFrom, const std::vector<std::string>& params);
 
+	std::vector<std::string> parseArgs(const std::string& argsWithoutCommand);
 };
 
 #endif //FT_IRC_PASSCMD_HPP

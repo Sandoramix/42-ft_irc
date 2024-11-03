@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <cerrno>
+#include <climits>
 #include "Server.hpp"
 
 #include "cmd/InviteCmd.hpp"
@@ -68,6 +69,13 @@ void Server::initCommands()
 
 void Server::startListening()
 {
+	char hostname[HOST_NAME_MAX];
+	if (gethostname(hostname, HOST_NAME_MAX)<0) {
+		throw ServerException("Failed to retrieve hostname");
+	}
+	this->retrievedHostname = hostname;
+	ResponseMsg::setHostname(this->retrievedHostname);
+
 	this->socketFd = socket(PF_INET, SOCK_STREAM, 0);
 	if (this->socketFd<=0) {
 		throw ServerException("Socket creation failed");
@@ -322,6 +330,15 @@ void Server::run()
 		this->deleteDisconnectedClients();
 	}
 }
+
+// OTHER PUBLIC METHODS USED BY THE COMMANDS -----------------------------------
+
+bool Server::isPasswordValid(const std::string& password) const { return this->password==password; }
+
+// GETTERS/SETTERS ------------------------------------------------------------
+
+const std::string& Server::getRetrievedHostname() const { return this->retrievedHostname; }
+
 
 // EXCEPTIONS -----------------------------------------------------------------
 

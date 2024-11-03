@@ -18,7 +18,6 @@ typedef std::vector<Client*> ClientsVector;
 typedef std::vector<CmdInterface *> ClientCommandsQueue;
 
 enum ClientState {
-	CS_UNKNOWN,
 	CS_CONNECTED,
 	CS_PASS_SENT,
 	CS_NICK_SENT,

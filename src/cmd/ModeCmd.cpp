@@ -9,7 +9,7 @@ ModeCmd::~ModeCmd()
 {
 }
 
-void ModeCmd::run(const Client& requestedFrom, const std::vector<std::string>& params)
+void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
 	(void)params;
 	(void)requestedFrom;

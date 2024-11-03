@@ -8,6 +8,7 @@ CXXFLAGS:=-std=c++98 -Wall -Wextra -Werror -g -DDEBUG=$(DEBUG) -I./includes
 
 SRC = ./src/Channel.cpp \
 	./src/Client.cpp \
+	./src/ResponseMsg.cpp \
 	./src/Server.cpp \
 	./src/cmd/CmdInterface.cpp \
 	./src/cmd/InviteCmd.cpp \
@@ -19,6 +20,7 @@ SRC = ./src/Channel.cpp \
 	./src/cmd/TopicCmd.cpp \
 	./src/cmd/UserCmd.cpp \
 	./src/main.cpp
+
 
 
 all: $(NAME)

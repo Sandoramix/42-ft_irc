@@ -9,7 +9,7 @@ JoinCmd::~JoinCmd()
 {
 }
 
-void JoinCmd::run(const Client& requestedFrom, const std::vector<std::string>& params)
+void JoinCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
 	(void)params;
 	(void)requestedFrom;

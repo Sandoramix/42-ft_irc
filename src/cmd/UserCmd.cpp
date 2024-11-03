@@ -1,7 +1,7 @@
 #include "cmd/UserCmd.hpp"
 
 UserCmd::UserCmd(const Server& server)
-		:CmdInterface("MODE", server, true)
+		:CmdInterface("USER", server, false)
 {
 }
 
@@ -9,7 +9,7 @@ UserCmd::~UserCmd()
 {
 }
 
-void UserCmd::run(const Client& requestedFrom, const std::vector<std::string>& params)
+void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
 	(void)params;
 	(void)requestedFrom;

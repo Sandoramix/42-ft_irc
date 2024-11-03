@@ -9,7 +9,7 @@ InviteCmd::~InviteCmd()
 {
 }
 
-void InviteCmd::run(const Client& requestedFrom, const std::vector<std::string>& params)
+void InviteCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
 	(void)params;
 	(void)requestedFrom;

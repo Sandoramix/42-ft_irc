@@ -17,9 +17,9 @@ Client& Client::operator=(const Client& other)
 	return *this;
 }
 Client::Client()
-		:state(CS_UNKNOWN) { }
+		:state(CS_CONNECTED) { }
 Client::Client(const int& socketFd)
-		:socketFd(socketFd), state(CS_UNKNOWN) { }
+		:socketFd(socketFd), state(CS_CONNECTED) { }
 
 Client::~Client() { }
 

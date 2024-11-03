@@ -7,7 +7,7 @@ CmdInterface::CmdInterface(const std::string& commandName, const Server& server,
 
 CmdInterface::~CmdInterface() { }
 
-void CmdInterface::run(const Client& requestedFrom, const std::vector<std::string>& params)
+void CmdInterface::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
 	(void)requestedFrom;
 	(void)params;
@@ -31,7 +31,7 @@ std::vector<std::string> CmdInterface::parseArgs(const std::string& argsWithoutC
 	}
 	return args;
 }
-bool CmdInterface::canUserRun(const Client& requestedFrom) const
+bool CmdInterface::canUserRun(Client& requestedFrom) const
 {
 	if (this->authenticationRequired) {
 		return (requestedFrom.isAuthenticated());

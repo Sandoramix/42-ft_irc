@@ -9,6 +9,7 @@ class CmdInterface;
 #include "IRCUtils.hpp"
 #include "Client.hpp"
 #include "Server.hpp"
+#include "ResponseMsg.hpp"
 
 /**
  * Parent class for all commands.
@@ -26,13 +27,13 @@ public:
 
 	virtual ~CmdInterface();
 
-	virtual void run(const Client& requestedFrom, const std::vector<std::string>& params);
+	virtual void run(Client& requestedFrom, const std::vector<std::string>& params);
 
 	/// Try to parse the command arguments from the client buffer. It is virtual so that some commands can override it.
 	virtual std::vector<std::string> parseArgs(const std::string& argsWithoutCommand);
 
 protected:
-	virtual bool canUserRun(const Client& requestedFrom) const;
+	virtual bool canUserRun(Client& requestedFrom) const;
 };
 
 #endif //IRCCMD_HPP

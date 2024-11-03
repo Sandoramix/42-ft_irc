@@ -11,7 +11,7 @@ public:
 	~KickCmd();
 
 public:
-	virtual void run(const Client& requestedFrom, const std::vector<std::string>& params);
+	virtual void run(Client& requestedFrom, const std::vector<std::string>& params);
 };
 
 #endif //FT_IRC_KICKCMD_HPP

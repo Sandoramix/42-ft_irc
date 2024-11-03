@@ -1,7 +1,7 @@
 #include "cmd/NickCmd.hpp"
 
 NickCmd::NickCmd(const Server& server)
-		:CmdInterface("MODE", server, true)
+		:CmdInterface("NICK", server, false)
 {
 }
 
@@ -9,7 +9,7 @@ NickCmd::~NickCmd()
 {
 }
 
-void NickCmd::run(const Client& requestedFrom, const std::vector<std::string>& params)
+void NickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
 	(void)params;
 	(void)requestedFrom;

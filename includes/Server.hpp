@@ -16,6 +16,7 @@ class Client;
 #include "cmd/CmdInterface.hpp"
 #include "Client.hpp"
 #include "Channel.hpp"
+#include "ResponseMsg.hpp"
 
 typedef std::map<const std::string, CmdInterface*> ServerCommandsMap;
 
@@ -30,6 +31,7 @@ private:
 
 // Server-only members
 private:
+	std::string retrievedHostname;
 	/// Map of currently connected clients (key: client fd, value: client object)
 	ClientsMap clients;
 	/// Map of implemented commands (key: command name, value: command object)
@@ -69,6 +71,11 @@ public:
 	~Server();
 	void run();
 
+	bool isPasswordValid(const std::string& password) const;
+
+// GETTERS/SETTERS
+public:
+	const std::string& getRetrievedHostname() const;
 //EXCEPTIONS
 public:
 	/// BAD CONFIGURATION EXCEPTION

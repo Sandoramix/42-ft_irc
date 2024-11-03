@@ -9,7 +9,7 @@ KickCmd::~KickCmd()
 {
 }
 
-void KickCmd::run(const Client& requestedFrom, const std::vector<std::string>& params)
+void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
 	(void)params;
 	(void)requestedFrom;
