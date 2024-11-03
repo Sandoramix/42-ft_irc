@@ -212,21 +212,27 @@ bool Server::tryToRunClientCommand(Client* client)
 			commandArgs = commandArgs.substr(firstSpace+1);
 		}
 		if (this->commands.find(commandName)==this->commands.end()) {
-			client->sendMessage(ResponseMsg::errorResponse(ERR_UNKNOWNCOMMAND, client->getNickname()));
+			client->sendMessage(ResponseMsg::genericResponse(ERR_UNKNOWNCOMMAND, client->getNickname()));
 
 			debug("Unknown command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", command=" << commandArgs);
 
 			findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 			continue;
 		}
-		commandCount++;
 		CmdInterface* cmd = this->commands[commandName];
+		commandCount++;
 
 		// Get command parameters (may be different for some commands (e.g. PASS))
-		std::vector<std::string> params = cmd->parseArgs(commandArgs);
-		debug("Command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args=" << params << "(size=" << params.size() << ")");
+		try {
+			std::vector<std::string> params = cmd->parseArgs(commandArgs);
+			debug("Command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args=" << params << "(size=" << params.size() << ")");
 
-		cmd->run(*client, params);
+			cmd->run(*client, params);
+		} catch (CmdInterface::CmdSyntaxErrorException& e) {
+			std::cerr << "Syntax error: " << e.what() << std::endl;
+			client->sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, client->getNickname(), e.what()));
+		}
+
 		findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 	};
 	debug("Command parsing finished for client[" << client->getSocketFd() << "]. Commands found=" << commandCount);

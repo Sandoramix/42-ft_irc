@@ -33,11 +33,12 @@ private:
 	ClientState state;
 	std::string localBuffer;
 
-
-	std::string hostname;
 	std::string nickname;
+
 	std::string username;
-	std::string password;
+	std::string hostname;
+	std::string serverName;
+	std::string realName;
 
 private:
 	Client(const Client&);
@@ -58,18 +59,20 @@ public:
 	const int& getSocketFd() const;
 	const ClientState& getState() const;
 	const std::string& getLocalBuffer() const;
-	const std::string& getHostname() const;
 	const std::string& getNickname() const;
 	const std::string& getUsername() const;
-	const std::string& getPassword() const;
+	const std::string& getHostname() const;
+	const std::string& getServerName() const;
+	const std::string& getRealName() const;
 
 	void setSocketFd(const int& socket_fd);
 	void setState(const ClientState& state);
 	void setLocalBuffer(const std::string& local_buffer);
-	void setHostname(const std::string& hostname);
 	void setNickname(const std::string& nickname);
 	void setUsername(const std::string& username);
-	void setPassword(const std::string& password);
+	void setHostname(const std::string& hostname);
+	void setServerName(const std::string& serverName);
+	void setRealName(const std::string& realName);
 };
 
 #endif //CLIENT_HPP

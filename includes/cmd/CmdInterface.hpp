@@ -34,6 +34,16 @@ public:
 
 protected:
 	virtual bool canUserRun(Client& requestedFrom) const;
+
+public:
+	class CmdSyntaxErrorException : public std::exception {
+	private:
+		std::string msg;
+	public:
+		explicit CmdSyntaxErrorException(const std::string& specificReason);
+		virtual ~CmdSyntaxErrorException() throw();
+		virtual const char* what() const throw();
+	};
 };
 
 #endif //IRCCMD_HPP

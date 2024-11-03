@@ -38,3 +38,20 @@ bool CmdInterface::canUserRun(Client& requestedFrom) const
 	}
 	return (true);
 }
+
+// EXCEPTIONS -----------------------------------------------------------------
+
+CmdInterface::CmdSyntaxErrorException::CmdSyntaxErrorException(const std::string& specificReason)
+{
+	if (specificReason.empty()) {
+		msg += "Invalid syntax";
+	}
+	else if (specificReason.find("Invalid syntax")!=std::string::npos) {
+		msg = specificReason;
+	}
+	else {
+		msg += "Invalid syntax: "+specificReason;
+	}
+}
+CmdInterface::CmdSyntaxErrorException::~CmdSyntaxErrorException() throw() { }
+const char* CmdInterface::CmdSyntaxErrorException::what() const throw() { return this->msg.c_str(); }

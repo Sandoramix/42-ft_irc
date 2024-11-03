@@ -10,6 +10,8 @@ ResponseMsg::~ResponseMsg() { }
 std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 {
 	switch (code) {
+	case RPL_WELCOME:
+		return "Welcome to the IRC Server @ " + hostname;
 	case ERR_UNKNOWNCOMMAND:
 		return "Unknown command";
 	case ERR_NEEDMOREPARAMS:
@@ -39,20 +41,27 @@ bool ResponseMsg::isHostnameSet()
 	return false;
 }
 
-std::string ResponseMsg::errorResponse(ResponseCode code, const std::string& target)
+std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target)
 {
-	std::string host = isHostnameSet() ? hostname : "*";
-	std::stringstream ss;
-
-	ss << ":" << host << " " << code << " " << (target.empty() ? "*" : target) << " :" << getDefaultMessage(code);
-	return ss.str();
+	return genericResponse(code, target, getDefaultMessage(code));
 }
 
-std::string ResponseMsg::errorResponse(ResponseCode code, const std::string& target, const std::string& message)
+std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target, const std::string& customMessage)
 {
 	std::string host = isHostnameSet() ? hostname : "*";
 	std::stringstream ss;
 
-	ss << ":" << host << " " << code << " " << (target.empty() ? "*" : target) << " :" << message;
+	std::stringstream codeStream;
+	codeStream << code;
+	int codeSize = codeStream.str().size();
+	codeStream.str("");
+	while (codeStream.str().size() + codeSize < 3) {
+		codeStream << "0";
+	}
+	codeStream << code;
+
+	std::string codeAsString = codeStream.str();
+
+	ss << ":" << host << " " << codeAsString << " " << (target.empty() ? "*" : target) << " :" << customMessage;
 	return ss.str();
 }

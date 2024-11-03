@@ -10,7 +10,7 @@
  * or <a href="https://www.irchelp.org/irchelp/rfc/chapter6.html">here</a>
  */
 enum ResponseCode {
-
+	RPL_WELCOME = 1,
 	// Error replies
 	ERR_UNKNOWNCOMMAND = 421,
 	ERR_NEEDMOREPARAMS = 461,
@@ -31,8 +31,8 @@ public:
 	static bool isHostnameSet();
 	static void setHostname(const std::string& newHostname);
 
-	static std::string errorResponse(ResponseCode code, const std::string& target);
-	static std::string errorResponse(ResponseCode code, const std::string& target, const std::string& customMessage);
+	static std::string genericResponse(ResponseCode code, const std::string& target);
+	static std::string genericResponse(ResponseCode code, const std::string& target, const std::string& customMessage);
 
 };
 

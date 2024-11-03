@@ -13,6 +13,7 @@ public:
 public:
 	virtual void run(Client& requestedFrom, const std::vector<std::string>& params);
 
+	std::vector<std::string> parseArgs(const std::string& argsWithoutCommand);
 };
 
 #endif //FT_IRC_USERCMD_HPP

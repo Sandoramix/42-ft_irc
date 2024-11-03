@@ -1,7 +1,7 @@
 #include "Client.hpp"
+
 Client::Client(const Client& other)
-		:socketFd(other.socketFd), state(other.state), localBuffer(other.localBuffer), hostname(other.hostname),
-		 nickname(other.nickname), username(other.username), password(other.password) { }
+		:socketFd(other.socketFd), state(other.state), localBuffer(other.localBuffer), nickname(other.nickname), username(other.username), hostname(other.hostname), serverName(other.serverName), realName(other.realName) { }
 
 Client& Client::operator=(const Client& other)
 {
@@ -12,7 +12,6 @@ Client& Client::operator=(const Client& other)
 		this->hostname = other.hostname;
 		this->nickname = other.nickname;
 		this->username = other.username;
-		this->password = other.password;
 	}
 	return *this;
 }
@@ -41,10 +40,11 @@ bool Client::sendMessage(const std::string& message) const
 const int& Client::getSocketFd() const { return socketFd; }
 const ClientState& Client::getState() const { return state; }
 const std::string& Client::getLocalBuffer() const { return localBuffer; }
-const std::string& Client::getHostname() const { return hostname; }
 const std::string& Client::getNickname() const { return nickname; }
 const std::string& Client::getUsername() const { return username; }
-const std::string& Client::getPassword() const { return password; }
+const std::string& Client::getHostname() const { return hostname; }
+const std::string& Client::getServerName() const { return serverName; }
+const std::string& Client::getRealName() const { return realName; }
 
 void Client::setSocketFd(const int& socket_fd) { socketFd = socket_fd; }
 void Client::setState(const ClientState& state) { this->state = state; }
@@ -52,6 +52,6 @@ void Client::setLocalBuffer(const std::string& local_buffer) { this->localBuffer
 void Client::setHostname(const std::string& hostname) { this->hostname = hostname; }
 void Client::setNickname(const std::string& nickname) { this->nickname = nickname; }
 void Client::setUsername(const std::string& username) { this->username = username; }
-void Client::setPassword(const std::string& password) { this->password = password; }
-
+void Client::setServerName(const std::string& serverName) { this->serverName = serverName; }
+void Client::setRealName(const std::string& realName) { this->realName = realName; }
 
