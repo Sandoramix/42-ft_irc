@@ -12,7 +12,7 @@ NickCmd::~NickCmd()
 void NickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
 	if (requestedFrom.getState() < CS_PASS_SENT) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTRED, requestedFrom.getNickname()));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname()));
 		return;
 	}
 	const std::string& newNickname = params[0];
@@ -31,6 +31,10 @@ void NickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 	if (foundClient){
 		debugInfo("Found client [" << foundClient->getSocketFd() << "] Nickname: " << foundClient->getNickname());
 	}
+	requestedFrom.setIsNickCmdSent(true);
 	requestedFrom.setNickname(params[0]);
+	if (requestedFrom.getIsUserCmdSent() && requestedFrom.getIsNickCmdSent()){
+		requestedFrom.setState(CS_ISFULLY_REGISTERED);
+	}
 	this->server.notifyClientOfNicknameChange(requestedFrom, oldNickname);
 }

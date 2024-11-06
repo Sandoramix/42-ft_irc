@@ -22,7 +22,7 @@ void PassCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 		return;
 	}
 	if (params.size()>1) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "Too many parameters"));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Too many parameters"));
 		debugError("Client[" << requestedFrom.getSocketFd() << "] tried to register but provided too many parameters");
 		return;
 	}

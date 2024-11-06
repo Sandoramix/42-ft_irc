@@ -2,7 +2,7 @@
 
 Client::Client(const Client& other)
 		:socketFd(other.socketFd), state(other.state), localBuffer(other.localBuffer), nickname(other.nickname), username(other.username), hostname(other.hostname), serverName(other.serverName),
-		 realName(other.realName), isUserCmdSent(other.isUserCmdSent) { }
+		 realName(other.realName), isUserCmdSent(other.isUserCmdSent), isNickCmdSent(other.isNickCmdSent) { }
 
 Client& Client::operator=(const Client& other)
 {
@@ -17,9 +17,9 @@ Client& Client::operator=(const Client& other)
 	return *this;
 }
 Client::Client()
-		:state(CS_CONNECTED), localBuffer(), nickname(), username(), hostname(), serverName(), realName(), isUserCmdSent(false) { }
+		:state(CS_CONNECTED), localBuffer(), nickname(), username(), hostname(), serverName(), realName(), isUserCmdSent(false), isNickCmdSent(false) { }
 Client::Client(const int& socketFd)
-		:socketFd(socketFd), state(CS_CONNECTED), localBuffer(), nickname(), username(), hostname(), serverName(), realName(), isUserCmdSent(false) { }
+		:socketFd(socketFd), state(CS_CONNECTED), localBuffer(), nickname(), username(), hostname(), serverName(), realName(), isUserCmdSent(false), isNickCmdSent(false) { }
 
 Client::~Client() { }
 
@@ -47,6 +47,7 @@ const std::string& Client::getHostname() const { return hostname; }
 const std::string& Client::getServerName() const { return serverName; }
 const std::string& Client::getRealName() const { return realName; }
 const bool& Client::getIsUserCmdSent() const { return isUserCmdSent; }
+const bool& Client::getIsNickCmdSent() const { return isNickCmdSent; }
 
 void Client::setSocketFd(const int& socket_fd) { socketFd = socket_fd; }
 void Client::setState(const ClientState& state) { this->state = state; }
@@ -57,4 +58,5 @@ void Client::setUsername(const std::string& username) { this->username = usernam
 void Client::setServerName(const std::string& serverName) { this->serverName = serverName; }
 void Client::setRealName(const std::string& realName) { this->realName = realName; }
 void Client::setIsUserCmdSent(const bool& isUserCmdSent) { this->isUserCmdSent = isUserCmdSent; }
+void Client::setIsNickCmdSent(const bool& isNickCmdSent) { this->isNickCmdSent = isNickCmdSent; }
 

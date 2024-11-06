@@ -18,7 +18,7 @@ UserCmd::~UserCmd()
 void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
 	if (requestedFrom.getState() < CS_PASS_SENT) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTRED, requestedFrom.getNickname()));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname()));
 		return;
 	}
 	if (requestedFrom.getIsUserCmdSent()) {
@@ -27,7 +27,7 @@ void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 		return;
 	}
 	if (params.size()!=4) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "Invalid number of parameters"));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of parameters"));
 		debugError("Client[" << requestedFrom.getSocketFd() << "] tried to register but invalid number of parameters was provided");
 		return;
 	}
@@ -36,6 +36,11 @@ void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 	requestedFrom.setHostname(params[1]);
 	requestedFrom.setServerName(params[2]);
 	requestedFrom.setRealName(params[3]);
+
+	requestedFrom.setIsUserCmdSent(true);
+	if (requestedFrom.getIsUserCmdSent() && requestedFrom.getIsNickCmdSent()){
+		requestedFrom.setState(CS_ISFULLY_REGISTERED);
+	}
 	requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_WELCOME, requestedFrom.getNickname()));
 }
 std::vector<std::string> UserCmd::parseArgs(const std::string& argsWithoutCommand)

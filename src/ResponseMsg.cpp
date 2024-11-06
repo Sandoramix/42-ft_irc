@@ -18,7 +18,7 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 		return "Erroneous nickname";
 	case ERR_NICKNAMEINUSE:
 		return "Nickname is already in use";
-	case ERR_NOTREGISTRED:
+	case ERR_NOTREGISTERED:
 		return "You have not registered";
 	case ERR_NEEDMOREPARAMS:
 		return "Not enough parameters";
@@ -26,6 +26,8 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 		return "You may not reregister";
 	case ERR_PASSWDMISMATCH:
 		return "Password incorrect";
+	case ERR_BADCHANNELKEY:
+		return "Cannot join channel";
 	default:
 		return "Unknown error";
 	}
@@ -49,10 +51,10 @@ bool ResponseMsg::isHostnameSet()
 
 std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target)
 {
-	return genericResponse(code, target, getDefaultMessage(code));
+	return genericResponse(code, target, "", getDefaultMessage(code));
 }
 
-std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target, const std::string& customMessage)
+std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target, const std::string &channelName, const std::string& customMessage)
 {
 	std::string host = isHostnameSet() ? hostname : "*";
 	std::stringstream ss;
@@ -68,12 +70,19 @@ std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& t
 
 	std::string codeAsString = codeStream.str();
 
-	ss << ":" << host << " " << codeAsString << " " << (target.empty() ? "*" : target) << " :" << customMessage;
+	ss << ":" << host << " " << codeAsString << " " << (target.empty() ? "*" : target) << (channelName.empty() ? "" : " " + channelName) << " :" << customMessage;
 	return ss.str();
 }
 std::string ResponseMsg::nicknameChangeResponse(const std::string& oldNickname, const std::string& newNickname)
 {
 	std::stringstream ss;
 	ss << ":" << oldNickname << " NICK :" << newNickname;
+	return ss.str();
+}
+
+std::string ResponseMsg::joinConfirmResponse(const Client &client, const std::string &channelName)
+{
+	std::stringstream ss;
+	ss << ":" << client.getNickname() << "!" << client.getUsername() << "@" << client.getHostname() << " JOIN :" << channelName;
 	return ss.str();
 }

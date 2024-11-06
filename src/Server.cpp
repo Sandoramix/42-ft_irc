@@ -47,6 +47,9 @@ Server::~Server()
 	for (ClientsMap::iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
 		delete it->second;
 	}
+	for (ChannelsMap::iterator it = this->channels.begin(); it!=this->channels.end(); ++it) {
+		delete it->second;
+	}
 	this->clients.clear();
 }
 
@@ -230,7 +233,7 @@ bool Server::tryToRunClientCommand(Client* client)
 			cmd->run(*client, params);
 		} catch (CmdInterface::CmdSyntaxErrorException& e) {
 			std::cerr << "Syntax error: " << e.what() << std::endl;
-			client->sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, client->getNickname(), e.what()));
+			client->sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, client->getNickname(), "", e.what()));
 		}
 
 		findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
@@ -366,9 +369,23 @@ void Server::notifyClientOfNicknameChange(Client& client, const std::string& old
 }
 
 
+Channel* Server::addChannel(const std::string &name, bool isPrivate)
+{
+	if(getChannelByName(name) == NULL)
+		this->channels[name] = new Channel(*this, name, "", isPrivate);
+	return this->channels[name];
+}
+
+
 // GETTERS/SETTERS ------------------------------------------------------------
 
 const std::string& Server::getRetrievedHostname() const { return this->retrievedHostname; }
+
+Channel* Server::getChannelByName(const std::string &channelName) {
+	if (this->channels.find(channelName) == this->channels.end())
+		return NULL;
+	return this->channels[channelName];
+}
 
 
 // EXCEPTIONS -----------------------------------------------------------------

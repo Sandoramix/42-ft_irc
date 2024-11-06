@@ -1,7 +1,7 @@
 #include "cmd/JoinCmd.hpp"
 
 JoinCmd::JoinCmd(Server& server)
-		:CmdInterface("JOIN", server, false, false, false)
+		:CmdInterface("JOIN", server, true, false, false)
 {
 }
 
@@ -11,33 +11,62 @@ JoinCmd::~JoinCmd()
 
 void JoinCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
+    std::vector<std::string> copiedParams(params);
 	(void)params;
 	(void)requestedFrom;
 	if (!this->canUserRun(requestedFrom)) {
 		// TODO: send error message
+        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname()));
 		return;
 	}
+    
+    // check for atleast 1 arg
+
+    std::string channelName = copiedParams[0];
+    if (channelName.empty() || channelName[0] != '#'){
+        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channelName, "Invalid channel name"));
+        return ;
+    }
+    
+    std::string possiblePassword = "";
+    bool isPasswordProvided = false;
+
+    if (copiedParams.size() > 1){
+        possiblePassword = copiedParams[copiedParams.size() - 1];
+        if (!possiblePassword.empty() && possiblePassword[0] != '#'){
+            isPasswordProvided = true;
+            copiedParams.pop_back();
+        }
+    }
+    // TODO: se vogliamo gestire join di piu' canali, modificare questo if.
+    if (copiedParams.size() != 1){
+        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of args"));
+        return ;
+    }
+    Channel *channel = server.getChannelByName(channelName);
 	// Controlla se il canale esiste già; se no, crealo
-    if (server.channels.find(channelName) == channels.end()) {
-        channels[channelName] = Channel{channelName};
+    if (channel == NULL) {
+        channel = server.addChannel(channelName, false);
+        channel->setPasswordProtected(isPasswordProvided);
+        channel->setPassword(possiblePassword);
+    } else {
+        if (channel->getPasswordProtected() && !channel->isPasswordValid(possiblePassword)){
+            requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_BADCHANNELKEY, requestedFrom.getNickname(), channel->getName(), "Cannot join channel"));
+            // TODO send error msg
+            return ;
+        }
     }
     
     // Aggiungi l'utente al canale
-    channels[channelName].users.push_back(user);
+    channel->addClient(&requestedFrom);
 
     // Messaggio di conferma JOIN
-    std::string joinMsg = ":" + user.nickname + " JOIN :" + channelName + "\r\n";
-    send(user.socket, joinMsg.c_str(), joinMsg.size(), 0);
-
+    requestedFrom.sendMessage(ResponseMsg::joinConfirmResponse(requestedFrom, channelName));
+    
     // Invio lista utenti
-    std::string userList = ":server 353 " + user.nickname + " = " + channelName + " :";
-    for (const auto& u : channels[channelName].users) {
-        userList += u.nickname + " ";
-    }
-    userList += "\r\n";
-    send(user.socket, userList.c_str(), userList.size(), 0);
+    std::string userList = channel->getClientsNicknames();
+    requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_NAMREPLY, requestedFrom.getNickname(), "= " + channelName, userList));
 
     // Fine della lista
-    std::string endListMsg = ":server 366 " + user.nickname + " " + channelName + " :End of /NAMES list.\r\n";
-    send(user.socket, endListMsg.c_str(), endListMsg.size(), 0);
+    requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_ENDOFNAMES, requestedFrom.getNickname(), channelName, "End of /NAMES list."));
 }

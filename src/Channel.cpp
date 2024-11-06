@@ -2,7 +2,7 @@
 
 // CONSTRUCTOR
 Channel::Channel(const Server& server, const std::string& name, const std::string& topic, bool isPrivate)
-		:server(&server), isPrivateChannel(isPrivate), name(name), topic(topic) { (void)this->server; }
+		:server(&server), isPrivateChannel(isPrivate), name(name), topic(topic), maxClients(0), password(), isPasswordProtected(false), isInviteOnly(false), isTopicReadOnly(false) { (void)this->server; }
 
 // DESTRUCTOR
 Channel::~Channel()
@@ -135,6 +135,22 @@ bool Channel::getPasswordProtected() const { return this->isPasswordProtected; }
 size_t Channel::getMaxClients() const { return this->maxClients; }
 bool Channel::getIsInviteOnly() const { return this->isInviteOnly; }
 bool Channel::getIsTopicReadOnly() const { return this->isTopicReadOnly; }
+std::string Channel::getClientsNicknames() const
+{
+	std::string clientsNicknames = "";
+	for (ClientsMap::const_iterator it = this->clients.begin(); it != this->clients.end(); ++it)
+	{
+		if (it != this->clients.begin())
+			clientsNicknames += " ";
+		clientsNicknames += it->second->getNickname();
+	}
+	return clientsNicknames;
+}
+bool Channel::isPasswordValid(const std::string &passw) const {
+	return this->password == passw;
+}
+
+
 
 void Channel::setName(const std::string& name) { this->name = name; }
 void Channel::setTopic(const std::string& topic)

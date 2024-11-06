@@ -70,6 +70,8 @@ public:
 	size_t getMaxClients() const;
 	bool getIsInviteOnly() const;
 	bool getIsTopicReadOnly() const;
+	std::string getClientsNicknames() const;
+	bool isPasswordValid(const std::string &passw) const;
 
 	void setIsPrivateChannel(bool isPrivate);
 	void setName(const std::string& name);

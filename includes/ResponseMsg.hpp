@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include "Client.hpp"
 
 /**
  * IRC response messages
@@ -11,14 +12,18 @@
  */
 enum ResponseCode {
 	RPL_WELCOME = 1,
+	RPL_NAMREPLY = 353,
+	RPL_ENDOFNAMES = 366,
 	// Error replies
+	ERR_NOSUCHCHANNEL = 403,
 	ERR_UNKNOWNCOMMAND = 421,
 	ERR_ERRONEUSNICKNAME = 432,
 	ERR_NICKNAMEINUSE = 433,
-	ERR_NOTREGISTRED = 451,
+	ERR_NOTREGISTERED = 451,
 	ERR_NEEDMOREPARAMS = 461,
 	ERR_ALREADYREGISTRED = 462,
 	ERR_PASSWDMISMATCH = 464,
+	ERR_BADCHANNELKEY = 475,
 };
 
 
@@ -35,9 +40,10 @@ public:
 	static void setHostname(const std::string& newHostname);
 
 	static std::string genericResponse(ResponseCode code, const std::string& target);
-	static std::string genericResponse(ResponseCode code, const std::string& target, const std::string& customMessage);
+	static std::string genericResponse(ResponseCode code, const std::string& target, const std::string &channelName, const std::string& customMessage);
 
 	static std::string nicknameChangeResponse(const std::string& oldNickname, const std::string& newNickname);
+	static std::string joinConfirmResponse(const Client &client, const std::string &channelName);
 };
 
 #endif //FT_IRC_RESPONSEMSG_HPP

@@ -19,7 +19,7 @@ class Client;
 #include "ResponseMsg.hpp"
 
 typedef std::map<const std::string, CmdInterface*> ServerCommandsMap;
-
+typedef std::map<std::string, Channel*> ChannelsMap;
 
 class Server {
 // Assignable from outside
@@ -46,7 +46,7 @@ private:
 	AllPollFdsVector allPollFds;
 
 	// CHANNELS
-	std::map<std::string, Channel*> channels;
+	ChannelsMap channels;
 
 // Server-only methods
 private:
@@ -81,9 +81,12 @@ public:
 
 	void notifyClientOfNicknameChange(Client& client, const std::string& oldNickname);
 
+	Channel* addChannel(const std::string &name, bool isPrivate);
+
 // GETTERS/SETTERS
 public:
 	const std::string& getRetrievedHostname() const;
+	Channel* getChannelByName(const std::string &channelName);
 //EXCEPTIONS
 public:
 	/// BAD CONFIGURATION EXCEPTION

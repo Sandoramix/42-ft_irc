@@ -39,6 +39,7 @@ private:
 	std::string realName;
 
 	bool isUserCmdSent;
+	bool isNickCmdSent;
 
 private:
 	Client(const Client&);
@@ -65,6 +66,7 @@ public:
 	const std::string& getServerName() const;
 	const std::string& getRealName() const;
 	const bool& getIsUserCmdSent() const;
+	const bool& getIsNickCmdSent() const;
 
 	void setSocketFd(const int& socket_fd);
 	void setState(const ClientState& state);
@@ -75,6 +77,7 @@ public:
 	void setServerName(const std::string& serverName);
 	void setRealName(const std::string& realName);
 	void setIsUserCmdSent(const bool& isUserCmdSent);
+	void setIsNickCmdSent(const bool& isNickCmdSent);
 };
 
 #endif //CLIENT_HPP
