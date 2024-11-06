@@ -7,7 +7,7 @@
 
 class NickCmd : public CmdInterface {
 public:
-	NickCmd(const Server& server);
+	NickCmd(Server& server);
 	~NickCmd();
 
 public:

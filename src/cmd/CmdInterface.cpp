@@ -1,6 +1,6 @@
 #include "cmd/CmdInterface.hpp"
 
-CmdInterface::CmdInterface(const std::string& commandName, const Server& server, bool authenticationRequired, bool checkForColon, bool isColonRequired)
+CmdInterface::CmdInterface(const std::string& commandName, Server& server, bool authenticationRequired, bool checkForColon, bool isColonRequired)
 		:authenticationRequired(authenticationRequired), commandName(commandName), server(server), checkForColon(checkForColon), isColonRequired(isColonRequired)
 {
 }

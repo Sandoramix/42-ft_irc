@@ -7,7 +7,7 @@
 
 class JoinCmd : public CmdInterface {
 public:
-	JoinCmd(const Server& server);
+	JoinCmd(Server& server);
 	~JoinCmd();
 
 public:

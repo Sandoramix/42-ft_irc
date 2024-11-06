@@ -1,6 +1,6 @@
 #include "cmd/JoinCmd.hpp"
 
-JoinCmd::JoinCmd(const Server& server)
+JoinCmd::JoinCmd(Server& server)
 		:CmdInterface("JOIN", server, false, false, false)
 {
 }

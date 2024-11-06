@@ -7,7 +7,7 @@
 
 class UserCmd : public CmdInterface {
 public:
-	UserCmd(const Server& server);
+	UserCmd(Server& server);
 	~UserCmd();
 
 public:

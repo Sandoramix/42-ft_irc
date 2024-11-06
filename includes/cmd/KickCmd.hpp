@@ -7,7 +7,7 @@
 
 class KickCmd : public CmdInterface {
 public:
-	KickCmd(const Server& server);
+	KickCmd(Server& server);
 	~KickCmd();
 
 public:

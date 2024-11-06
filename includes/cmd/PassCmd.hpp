@@ -7,7 +7,7 @@
 
 class PassCmd : public CmdInterface {
 public:
-	PassCmd(const Server& server);
+	PassCmd(Server& server);
 	~PassCmd();
 
 public:

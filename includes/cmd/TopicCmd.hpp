@@ -7,7 +7,7 @@
 
 class TopicCmd : public CmdInterface {
 public:
-	TopicCmd(const Server& server);
+	TopicCmd(Server& server);
 	~TopicCmd();
 
 public:

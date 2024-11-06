@@ -1,6 +1,6 @@
 #include "cmd/NickCmd.hpp"
 
-NickCmd::NickCmd(const Server& server)
+NickCmd::NickCmd(Server& server)
 		:CmdInterface("NICK", server, false, false, false)
 {
 }

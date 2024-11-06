@@ -1,6 +1,6 @@
 #include "cmd/UserCmd.hpp"
 
-UserCmd::UserCmd(const Server& server)
+UserCmd::UserCmd(Server& server)
 		:CmdInterface("USER", server, false, false, false)
 {
 }

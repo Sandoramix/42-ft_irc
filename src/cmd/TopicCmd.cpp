@@ -1,6 +1,6 @@
 #include "cmd/TopicCmd.hpp"
 
-TopicCmd::TopicCmd(const Server& server)
+TopicCmd::TopicCmd(Server& server)
 		:CmdInterface("TOPIC", server, true, false, false)
 {
 }

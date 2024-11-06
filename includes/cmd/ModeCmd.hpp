@@ -7,7 +7,7 @@
 
 class ModeCmd : public CmdInterface {
 public:
-	ModeCmd(const Server& server);
+	ModeCmd(Server& server);
 	~ModeCmd();
 
 public:

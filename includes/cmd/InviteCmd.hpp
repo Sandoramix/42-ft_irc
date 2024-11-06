@@ -7,7 +7,7 @@
 
 class InviteCmd : public CmdInterface {
 public:
-	InviteCmd(const Server& server);
+	InviteCmd(Server& server);
 	~InviteCmd();
 
 public:
