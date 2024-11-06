@@ -1,7 +1,7 @@
 #include "cmd/ModeCmd.hpp"
 
 ModeCmd::ModeCmd(const Server& server)
-		:CmdInterface("MODE", server, true)
+		:CmdInterface("MODE", server, true, false, false)
 {
 }
 

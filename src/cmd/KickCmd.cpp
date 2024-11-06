@@ -1,7 +1,7 @@
 #include "cmd/KickCmd.hpp"
 
 KickCmd::KickCmd(const Server& server)
-		:CmdInterface("KICK", server, true)
+		:CmdInterface("KICK", server, true, false, false)
 {
 }
 

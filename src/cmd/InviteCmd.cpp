@@ -1,7 +1,7 @@
 #include "cmd/InviteCmd.hpp"
 
 InviteCmd::InviteCmd(const Server& server)
-		:CmdInterface("INVITE", server, true)
+		:CmdInterface("INVITE", server, true, false, false)
 {
 }
 

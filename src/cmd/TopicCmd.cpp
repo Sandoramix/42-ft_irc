@@ -1,7 +1,7 @@
 #include "cmd/TopicCmd.hpp"
 
 TopicCmd::TopicCmd(const Server& server)
-		:CmdInterface("TOPIC", server, true)
+		:CmdInterface("TOPIC", server, true, false, false)
 {
 }
 

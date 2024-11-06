@@ -1,7 +1,7 @@
 #include "cmd/CmdInterface.hpp"
 
-CmdInterface::CmdInterface(const std::string& commandName, const Server& server, bool authenticationRequired)
-		:authenticationRequired(authenticationRequired), commandName(commandName), server(server)
+CmdInterface::CmdInterface(const std::string& commandName, const Server& server, bool authenticationRequired, bool checkForColon, bool isColonRequired)
+		:authenticationRequired(authenticationRequired), commandName(commandName), server(server), checkForColon(checkForColon), isColonRequired(isColonRequired)
 {
 }
 
@@ -19,12 +19,24 @@ std::vector<std::string> CmdInterface::parseArgs(const std::string& argsWithoutC
 	std::string copy(argsWithoutCommand);
 	std::vector<std::string> args;
 
+	size_t colonPos = this->checkForColon ? copy.find(':') : std::string::npos;
+	if (this->isColonRequired && colonPos==std::string::npos) {
+		throw CmdSyntaxErrorException("missing colon");
+	}
+
 	size_t pos = 0;
 	pos = copy.find(' ', 0);
-	while (pos!=std::string::npos) {
+	while (pos!=std::string::npos && (!this->checkForColon || pos<colonPos)) {
 		args.push_back(copy.substr(0, pos));
 		copy = copy.substr(pos+1);
 		pos = copy.find(' ', 0);
+		colonPos = this->checkForColon ? copy.find(':') : std::string::npos;
+	}
+	if (this->checkForColon && colonPos!=std::string::npos) {
+		if (colonPos != 0 && copy[colonPos-1]!=' ') {
+			throw CmdSyntaxErrorException("invalid colon position");
+		}
+		copy = copy.substr(colonPos+1);
 	}
 	if (!copy.empty()) {
 		args.push_back(copy);
