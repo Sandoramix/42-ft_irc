@@ -46,7 +46,7 @@ private:
 	AllPollFdsVector allPollFds;
 
 	// CHANNELS
-	std::vector<Channel*> channels;
+	std::map<std::string, Channel*> channels;
 
 // Server-only methods
 private:
@@ -79,7 +79,7 @@ public:
 
 	Client *findClientByNickname(const std::string& nickname) const;
 
-	void notifyClientOfNicknameChange(Client& client, const std::string& oldNickname) const;
+	void notifyClientOfNicknameChange(Client& client, const std::string& oldNickname);
 
 // GETTERS/SETTERS
 public:
