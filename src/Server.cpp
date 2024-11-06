@@ -355,12 +355,12 @@ Client* Server::findClientByNickname(const std::string& nickname) const
 	return NULL;
 }
 
-void Server::notifyClientOfNicknameChange(Client& client, const std::string& oldNickname) const
+void Server::notifyClientOfNicknameChange(Client& client, const std::string& oldNickname)
 {
-	for (std::vector<Channel*>::const_iterator it = this->channels.begin(); it!=this->channels.end(); ++it) {
-		if (!*it) { continue; }
-		if ((*it)->isClientInChannel(&client)) {
-			this->sendMessageToChannel(*it, ResponseMsg::nicknameChangeResponse(oldNickname, client.getNickname()));
+	for (std::map<std::string, Channel*>::iterator it = this->channels.begin(); it!=this->channels.end(); ++it) {
+		if (!it->second) { continue; }
+		if (it->second->isClientInChannel(&client)) {
+			this->sendMessageToChannel(it->second, ResponseMsg::nicknameChangeResponse(oldNickname, client.getNickname()));
 		}
 	}
 }
