@@ -1,7 +1,8 @@
 #include "Client.hpp"
 
 Client::Client(const Client& other)
-		:socketFd(other.socketFd), state(other.state), localBuffer(other.localBuffer), nickname(other.nickname), username(other.username), hostname(other.hostname), serverName(other.serverName), realName(other.realName) { }
+		:socketFd(other.socketFd), state(other.state), localBuffer(other.localBuffer), nickname(other.nickname), username(other.username), hostname(other.hostname), serverName(other.serverName),
+		 realName(other.realName), isUserCmdSent(other.isUserCmdSent) { }
 
 Client& Client::operator=(const Client& other)
 {
@@ -16,13 +17,13 @@ Client& Client::operator=(const Client& other)
 	return *this;
 }
 Client::Client()
-		:state(CS_CONNECTED) { }
+		:state(CS_CONNECTED), localBuffer(), nickname(), username(), hostname(), serverName(), realName(), isUserCmdSent(false) { }
 Client::Client(const int& socketFd)
-		:socketFd(socketFd), state(CS_CONNECTED) { }
+		:socketFd(socketFd), state(CS_CONNECTED), localBuffer(), nickname(), username(), hostname(), serverName(), realName(), isUserCmdSent(false) { }
 
 Client::~Client() { }
 
-bool Client::isAuthenticated() const { return (this->state==CS_AUTHENTICATED); }
+bool Client::isAuthenticated() const { return (this->state==CS_ISFULLY_REGISTERED); }
 
 bool Client::sendMessage(const std::string& message) const
 {
@@ -45,6 +46,7 @@ const std::string& Client::getUsername() const { return username; }
 const std::string& Client::getHostname() const { return hostname; }
 const std::string& Client::getServerName() const { return serverName; }
 const std::string& Client::getRealName() const { return realName; }
+const bool& Client::getIsUserCmdSent() const { return isUserCmdSent; }
 
 void Client::setSocketFd(const int& socket_fd) { socketFd = socket_fd; }
 void Client::setState(const ClientState& state) { this->state = state; }
@@ -54,4 +56,5 @@ void Client::setNickname(const std::string& nickname) { this->nickname = nicknam
 void Client::setUsername(const std::string& username) { this->username = username; }
 void Client::setServerName(const std::string& serverName) { this->serverName = serverName; }
 void Client::setRealName(const std::string& realName) { this->realName = realName; }
+void Client::setIsUserCmdSent(const bool& isUserCmdSent) { this->isUserCmdSent = isUserCmdSent; }
 

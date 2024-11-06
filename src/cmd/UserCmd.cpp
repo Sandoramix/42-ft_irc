@@ -17,12 +17,21 @@ UserCmd::~UserCmd()
  */
 void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
-	(void)params;
-	(void)requestedFrom;
-	if (!this->canUserRun(requestedFrom)) {
-		// TODO: send error message
+	if (requestedFrom.getState() < CS_PASS_SENT) {
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTRED, requestedFrom.getNickname()));
 		return;
 	}
+	if (requestedFrom.getIsUserCmdSent()) {
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_ALREADYREGISTRED, requestedFrom.getNickname()));
+		debugError("Client[" << requestedFrom.getSocketFd() << "] tried to register but the client is already registered");
+		return;
+	}
+	if (params.size()!=4) {
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "Invalid number of parameters"));
+		debugError("Client[" << requestedFrom.getSocketFd() << "] tried to register but invalid number of parameters was provided");
+		return;
+	}
+
 	requestedFrom.setUsername(params[0]);
 	requestedFrom.setHostname(params[1]);
 	requestedFrom.setServerName(params[2]);
@@ -36,7 +45,7 @@ std::vector<std::string> UserCmd::parseArgs(const std::string& argsWithoutComman
 	size_t pos = 0;
 
 	pos = copy.find(' ');
-	// GET ONLY <USERNAME> <HOSTNAME>
+	// GET ONLY <USERNAME> <HOSTNAME> <SERVERNAME>
 	while (pos!=std::string::npos && args.size()<3) {
 		args.push_back(copy.substr(0, pos));
 		copy = copy.substr(pos+1);

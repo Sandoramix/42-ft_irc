@@ -345,6 +345,27 @@ void Server::run()
 
 bool Server::isPasswordValid(const std::string& password) const { return this->password==password; }
 
+Client* Server::findClientByNickname(const std::string& nickname) const
+{
+	for (ClientsMap::const_iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
+		if (it->second->getNickname()==nickname) {
+			return it->second;
+		}
+	}
+	return NULL;
+}
+
+void Server::notifyClientOfNicknameChange(Client& client, const std::string& oldNickname) const
+{
+	for (std::vector<Channel*>::const_iterator it = this->channels.begin(); it!=this->channels.end(); ++it) {
+		if (!*it) { continue; }
+		if ((*it)->isClientInChannel(&client)) {
+			this->sendMessageToChannel(*it, ResponseMsg::nicknameChangeResponse(oldNickname, client.getNickname()));
+		}
+	}
+}
+
+
 // GETTERS/SETTERS ------------------------------------------------------------
 
 const std::string& Server::getRetrievedHostname() const { return this->retrievedHostname; }

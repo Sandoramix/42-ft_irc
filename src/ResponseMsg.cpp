@@ -14,6 +14,12 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 		return "Welcome to the IRC Server @ " + hostname;
 	case ERR_UNKNOWNCOMMAND:
 		return "Unknown command";
+	case ERR_ERRONEUSNICKNAME:
+		return "Erroneous nickname";
+	case ERR_NICKNAMEINUSE:
+		return "Nickname is already in use";
+	case ERR_NOTREGISTRED:
+		return "You have not registered";
 	case ERR_NEEDMOREPARAMS:
 		return "Not enough parameters";
 	case ERR_ALREADYREGISTRED:
@@ -63,5 +69,11 @@ std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& t
 	std::string codeAsString = codeStream.str();
 
 	ss << ":" << host << " " << codeAsString << " " << (target.empty() ? "*" : target) << " :" << customMessage;
+	return ss.str();
+}
+std::string ResponseMsg::nicknameChangeResponse(const std::string& oldNickname, const std::string& newNickname)
+{
+	std::stringstream ss;
+	ss << ":" << oldNickname << " NICK :" << newNickname;
 	return ss.str();
 }

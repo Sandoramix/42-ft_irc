@@ -20,9 +20,7 @@ typedef std::vector<CmdInterface *> ClientCommandsQueue;
 enum ClientState {
 	CS_CONNECTED,
 	CS_PASS_SENT,
-	CS_NICK_SENT,
-	CS_USERNAME_SENT,
-	CS_AUTHENTICATED,
+	CS_ISFULLY_REGISTERED,
 	CS_DISCONNECTED
 	//... ?
 };
@@ -39,6 +37,8 @@ private:
 	std::string hostname;
 	std::string serverName;
 	std::string realName;
+
+	bool isUserCmdSent;
 
 private:
 	Client(const Client&);
@@ -64,6 +64,7 @@ public:
 	const std::string& getHostname() const;
 	const std::string& getServerName() const;
 	const std::string& getRealName() const;
+	const bool& getIsUserCmdSent() const;
 
 	void setSocketFd(const int& socket_fd);
 	void setState(const ClientState& state);
@@ -73,6 +74,7 @@ public:
 	void setHostname(const std::string& hostname);
 	void setServerName(const std::string& serverName);
 	void setRealName(const std::string& realName);
+	void setIsUserCmdSent(const bool& isUserCmdSent);
 };
 
 #endif //CLIENT_HPP

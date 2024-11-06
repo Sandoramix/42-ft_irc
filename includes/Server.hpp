@@ -32,10 +32,11 @@ private:
 // Server-only members
 private:
 	std::string retrievedHostname;
-	/// Map of currently connected clients (key: client fd, value: client object)
-	ClientsMap clients;
 	/// Map of implemented commands (key: command name, value: command object)
 	ServerCommandsMap commands;
+
+	/// Map of currently connected clients (key: client fd, value: client object)
+	ClientsMap clients;
 
 	/// Socket file descriptor
 	SocketFd socketFd;
@@ -43,6 +44,9 @@ private:
 	SocketAddrIn socketAddr;
 	/// polling fds
 	AllPollFdsVector allPollFds;
+
+	// CHANNELS
+	std::vector<Channel*> channels;
 
 // Server-only methods
 private:
@@ -72,6 +76,10 @@ public:
 	void run();
 
 	bool isPasswordValid(const std::string& password) const;
+
+	Client *findClientByNickname(const std::string& nickname) const;
+
+	void notifyClientOfNicknameChange(Client& client, const std::string& oldNickname) const;
 
 // GETTERS/SETTERS
 public:
