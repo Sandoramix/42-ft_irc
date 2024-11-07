@@ -1,7 +1,7 @@
 #include "cmd/PassCmd.hpp"
 
 PassCmd::PassCmd(Server& server)
-		:CmdInterface("PASS", server, false, false, false)
+		:CmdInterface("PASS", server, false, true, false)
 {
 }
 
@@ -33,13 +33,4 @@ void PassCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 	}
 	requestedFrom.setState(CS_PASS_SENT);
 	debugSuccess("Client[" << requestedFrom.getSocketFd() << "] authenticated with correct password");
-}
-
-std::vector<std::string> PassCmd::parseArgs(const std::string& argsWithoutCommand)
-{
-	std::vector<std::string> args;
-	if (!argsWithoutCommand.empty()) {
-		args.push_back(argsWithoutCommand);
-	}
-	return args;
 }
