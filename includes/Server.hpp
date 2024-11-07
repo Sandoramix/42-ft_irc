@@ -68,7 +68,7 @@ private:
 	/// Send a message to the client
 	bool sendMessageToClient(Client* client, const std::string& message) const;
 
-	bool sendMessageToChannel(Channel *channel, const std::string& message) const;
+	//bool sendMessageToChannel(Channel *channel, const std::string& message) const;
 
 public:
 	Server(const std::string& host, const std::string& port, const std::string& password);
@@ -82,6 +82,8 @@ public:
 	void notifyClientOfNicknameChange(Client& client, const std::string& oldNickname);
 
 	Channel* addChannel(const std::string &name, bool isPrivate);
+
+	bool sendMessageToChannel(Channel *channel, const std::string& message) const;
 
 // GETTERS/SETTERS
 public:

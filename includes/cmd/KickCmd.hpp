@@ -7,11 +7,13 @@
 
 class KickCmd : public CmdInterface {
 public:
-	KickCmd(Server& server);
-	~KickCmd();
+    KickCmd(Server& server);
+    ~KickCmd();
 
-public:
-	virtual void run(Client& requestedFrom, const std::vector<std::string>& params);
+    virtual void run(Client& requestedFrom, const std::vector<std::string>& params);
+
+//private:
+//    std::vector<std::string> parseArgs(const std::string& argsWithoutCommand);
 };
 
-#endif //FT_IRC_KICKCMD_HPP
+#endif // FT_IRC_KICKCMD_HPP

@@ -1,6 +1,8 @@
 {
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/includes",
+        "${workspaceFolder}/src/cmd",        // Add this path if your headers are in src/cmd
+        "${workspaceFolder}/src"             // Optional: add src directory if headers are elsewhere within src
     ],
     "files.associations": {
         "array": "cpp",

@@ -1,21 +1,47 @@
 #include "cmd/KickCmd.hpp"
+#include "Channel.hpp"
+#include "ResponseMsg.hpp"
 
 KickCmd::KickCmd(Server& server)
-		:CmdInterface("KICK", server, true, false, false)
-{
+    : CmdInterface("KICK", server, true) {
 }
 
-KickCmd::~KickCmd()
-{
-}
+KickCmd::~KickCmd() {}
 
-void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
-{
-	(void)params;
-	(void)requestedFrom;
-	if (!this->canUserRun(requestedFrom)) {
-		// TODO: send error message
-		return;
-	}
-	// TODO: implement
+
+void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params) {
+    // Check if the user has provided the required parameters: <channel> <user>
+    if (params.size() < 2) {
+        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "KICK <channel> <user>"));
+        return;
+    }
+
+    const std::string& channelName = params[0];
+    const std::string& targetNickname = params[1];
+
+    // Check if the channel exists
+    Channel* channel = server.getChannelByName(channelName);
+    if (!channel) {
+        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), "", "No such channel: " + channelName));
+        return;
+    }
+
+    // Verify that the client is an operator in the channel
+    if (!channel->isClientOperator(&requestedFrom)) {
+        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), "", "You are not a channel operator"));
+        return;
+    }
+
+    // Check if the target client is in the channel
+    Client* targetClient = server.findClientByNickname(targetNickname);
+    if (!targetClient || !channel->isClientInChannel(targetClient)) {
+        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_USERNOTINCHANNEL, requestedFrom.getNickname(), channelName, targetNickname + " is not in the channel"));
+        return;
+    }
+
+    // Perform the kick action
+    channel->removeClient(targetClient);
+    std::string kickMessage = ":" + requestedFrom.getNickname() + " KICK " + channelName + " " + targetNickname;
+    server.sendMessageToChannel(channel, kickMessage);
+    targetClient->sendMessage("You have been kicked from " + channelName + " by " + requestedFrom.getNickname());
 }

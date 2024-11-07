@@ -60,3 +60,22 @@ void Client::setRealName(const std::string& realName) { this->realName = realNam
 void Client::setIsUserCmdSent(const bool& isUserCmdSent) { this->isUserCmdSent = isUserCmdSent; }
 void Client::setIsNickCmdSent(const bool& isNickCmdSent) { this->isNickCmdSent = isNickCmdSent; }
 
+
+/*
+bool Channel::isClientOperator(Client* client) const {
+    return std::find(operatorClients.begin(), operatorClients.end(), client->getSocketFd()) != operatorClients.end();
+}
+
+bool Channel::isClientInChannel(Client* client) const {
+    return clients.find(client->getSocketFd()) != clients.end();
+}
+
+bool Channel::removeClient(Client* client) {
+    ClientsMap::iterator it = clients.find(client->getSocketFd());
+    if (it != clients.end()) {
+        clients.erase(it);
+        return true;
+    }
+    return false;
+}
+*/
