@@ -18,11 +18,11 @@ UserCmd::~UserCmd()
 void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
 	if (requestedFrom.getState() < CS_PASS_SENT) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname()));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname(), ""));
 		return;
 	}
 	if (requestedFrom.getIsUserCmdSent()) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_ALREADYREGISTRED, requestedFrom.getNickname()));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_ALREADYREGISTRED, requestedFrom.getNickname(), ""));
 		debugError("Client[" << requestedFrom.getSocketFd() << "] tried to register but the client is already registered");
 		return;
 	}
@@ -40,7 +40,7 @@ void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 	requestedFrom.setIsUserCmdSent(true);
 	if (requestedFrom.getIsUserCmdSent() && requestedFrom.getIsNickCmdSent() && !requestedFrom.isFullyRegistered()){
 		requestedFrom.setState(CS_ISFULLY_REGISTERED);
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_WELCOME, requestedFrom.getNickname()));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_WELCOME, requestedFrom.getNickname(), ""));
 	}
 }
 std::vector<std::string> UserCmd::parseArgs(const std::string& argsWithoutCommand)

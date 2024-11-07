@@ -41,7 +41,7 @@ public:
 	static bool isHostnameSet();
 	static void setHostname(const std::string& newHostname);
 
-	static std::string genericResponse(ResponseCode code, const std::string& target);
+	static std::string genericResponse(ResponseCode code, const std::string& target, const std::string& channelName);
 	static std::string genericResponse(ResponseCode code, const std::string& target, const std::string &channelName, const std::string& customMessage);
 
 	static std::string nicknameChangeResponse(const std::string& oldNickname, const std::string& newNickname);

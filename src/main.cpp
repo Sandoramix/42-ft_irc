@@ -20,15 +20,15 @@ int main(int argc, char* argv[])
 		server.run();
 	}
 	catch (const Server::BadConfigException& e) {
-		std::cerr << "Bad configuration: " << e.what() << std::endl;
+		std::cerr << RED << "Bad configuration: " << e.what() << RESET << std::endl;
 		return (1);
 	}
 	catch (Server::ServerException& e) {
-		std::cerr << "Server error: " << e.what() << std::endl;
+		std::cerr << RED << "Server error: " << e.what() << RESET << std::endl;
 		return (1);
 	}
 	catch (const std::exception& e) {
-		std::cerr << "Unexpected exception occurred: " << e.what() << std::endl;
+		std::cerr << MAGENTA << "Unexpected exception occurred: " << e.what() << RESET << std::endl;
 		return (1);
 	}
 	return 0;

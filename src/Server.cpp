@@ -11,6 +11,7 @@
 #include "cmd/PassCmd.hpp"
 #include "cmd/NickCmd.hpp"
 #include "cmd/UserCmd.hpp"
+#include "cmd/PingCmd.hpp"
 
 // CONSTRUCTOR
 Server::Server(const std::string& host, const std::string& port, const std::string& password)
@@ -71,6 +72,8 @@ void Server::initCommands()
 	commands["MODE"] = new ModeCmd(*this);
 	commands["TOPIC"] = new TopicCmd(*this);
 
+	commands["PING"] = new PingCmd(*this);
+
 	debug("Initialized " << commands.size() << " commands.");
 }
 
@@ -111,14 +114,14 @@ void Server::startListening()
 	this->allPollFds.push_back(pollfd());
 	this->allPollFds.back().fd = this->socketFd;
 	this->allPollFds.back().events = POLLIN;
-	debugInfo("Socket created && bound && listening. Socket fd: " << this->socketFd);
+	debugInfo("Server: socket created && bound && listening. socketFd: " << this->socketFd);
 }
 
 void Server::acceptConnection()
 {
 	// Check if server is full: if the users don't exceed the maxConnections.
 	if (this->clients.size()>=this->maxConnections) {
-		std::cerr << "Server is full: cannot accept new connection." << std::endl;
+		std::cerr << RED << "Server is full: cannot accept new connection." << RESET << std::endl;
 		return;
 	}
 
@@ -127,11 +130,11 @@ void Server::acceptConnection()
 
 	SocketFd clientFd = accept(this->socketFd, (SocketAddr*)&addr, &addr_len);
 	if (clientFd==-1) {
-		std::cerr << "Someone tried to connect but the `accept` failed..." << std::endl;
+		std::cerr << RED << "Someone tried to connect but the `accept` failed..." << RESET<< std::endl;
 		return;
 	}
 	if (fcntl(clientFd, F_SETFL, O_NONBLOCK)==-1) {
-		std::cerr << "Could not accept a new user because an error occurred when trying to set the socket as non-blocking" << std::endl;
+		std::cerr << RED << "Could not accept a new user because an error occurred when trying to set the socket as non-blocking" << RESET << std::endl;
 		return;
 	}
 	if (this->clients.find(clientFd)!=this->clients.end()) {
@@ -143,7 +146,7 @@ void Server::acceptConnection()
 	this->allPollFds.back().fd = clientFd;
 	this->allPollFds.back().events = POLLIN | POLLHUP;
 
-	debugInfo("New user connected. Socket fd: " << clientFd);
+	debugSuccess("Client[" << clientFd << "]: new user connected.");
 }
 
 void Server::receiveClientMessage(Client* client)
@@ -195,10 +198,9 @@ bool Server::tryToRunClientCommand(Client* client)
 	size_t delimSize;
 
 	if (client->getState()==CS_DISCONNECTED) {
+		debug("Client[" << client->getSocketFd() << "]: command parsing skipped because the client is disconnected.");
 		return false;
 	}
-
-	debug("Command parsing started for client[" << client->getSocketFd() << "].");
 
 	findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 
@@ -218,7 +220,7 @@ bool Server::tryToRunClientCommand(Client* client)
 			commandArgs = commandArgs.substr(firstSpace+1);
 		}
 		if (this->commands.find(commandName)==this->commands.end()) {
-			client->sendMessage(ResponseMsg::genericResponse(ERR_UNKNOWNCOMMAND, client->getNickname()));
+			client->sendMessage(ResponseMsg::genericResponse(ERR_UNKNOWNCOMMAND, client->getNickname(), ""));
 
 			debugError("Client[" << client->getSocketFd() << "] tried to run unknown command [" << commandName << "] with arguments \"" << commandArgs << "\"");
 
@@ -228,23 +230,21 @@ bool Server::tryToRunClientCommand(Client* client)
 		CmdInterface* cmd = this->commands[commandName];
 		commandCount++;
 
-		debug("Client[" << client->getSocketFd() << "]: parsing command [" << commandName << "] with arguments \"" << commandArgs << "\"");
-
 		try {
 			std::vector<std::string> params = cmd->parseArgs(commandArgs);
-			debug("Client[" << client->getSocketFd() << "]: command [" << commandName << "] parsed successfully. Args=" << params << "(size=" << params.size() << ")");
+			debug("Client[" << client->getSocketFd() << "]: command [" << commandName << "] parsed successfully. Args=" << params << " (size=" << params.size() << ")");
 
 			cmd->checkForAuthOrSendErrorAndThrow(*client);
 
 			cmd->run(*client, params);
 		}
 		catch (CmdInterface::CmdSyntaxErrorException& e) {
-			debugError("Client[" << client->getSocketFd() << "] tried to run command [" << commandName << "] but provided invalid arguments. Error: " << e.what());
+			debugError("Client[" << client->getSocketFd() << "] tried to run command [" << commandName << "] with arguments \"" << commandArgs << "\" but provided invalid arguments. Error: " << e.what());
 			client->sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, client->getNickname(), "", e.what()));
 		}
 		catch (CmdInterface::CmdAuthErrorException& e) {
-			debugError("Client[" << client->getSocketFd() << "] tried to run command [" << commandName << "] but is not authenticated");
-			client->sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, client->getNickname()));
+			debugError("Client[" << client->getSocketFd() << "] tried to run command [" << commandName << "] with arguments \"" << commandArgs << "\" but is not authenticated");
+			client->sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, client->getNickname(), ""));
 		}
 
 		findNextDelimiter(client->getLocalBuffer(), pos, delimSize);

@@ -11,7 +11,7 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 {
 	switch (code) {
 	case RPL_WELCOME:
-		return "Welcome to the 42Firenze IRC Server@" + hostname;
+		return "Welcome to the 42Firenze IRC Server@"+hostname;
 	case ERR_UNKNOWNCOMMAND:
 		return "Unknown command";
 	case ERR_ERRONEUSNICKNAME:
@@ -37,8 +37,7 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 
 // PUBLIC METHODS -------------------------------------------------------------
 
-void ResponseMsg::setHostname(const std::string& newHostname)
-{ hostname = newHostname; }
+void ResponseMsg::setHostname(const std::string& newHostname) { hostname = newHostname; }
 
 bool ResponseMsg::isHostnameSet()
 {
@@ -49,12 +48,12 @@ bool ResponseMsg::isHostnameSet()
 	return false;
 }
 
-std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target)
+std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target, const std::string& channelName)
 {
-	return genericResponse(code, target, "", getDefaultMessage(code));
+	return genericResponse(code, target, channelName, getDefaultMessage(code));
 }
 
-std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target, const std::string &channelName, const std::string& customMessage)
+std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target, const std::string& channelName, const std::string& customMessage)
 {
 	std::string host = isHostnameSet() ? hostname : "*";
 	std::stringstream ss;
@@ -63,33 +62,36 @@ std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& t
 	codeStream << code;
 	int codeSize = codeStream.str().size();
 	codeStream.str("");
-	while (codeStream.str().size() + codeSize < 3) {
+	while (codeStream.str().size()+codeSize<3) {
 		codeStream << "0";
 	}
 	codeStream << code;
 
 	std::string codeAsString = codeStream.str();
 
-	ss << ":" << host << " " << codeAsString << " " << (target.empty() ? "*" : target) << (channelName.empty() ? "" : " " + channelName) << " :" << customMessage;
+	ss << ":" << host << " " << codeAsString << " " << (target.empty() ? "*" : target) << (channelName.empty() ? "" : " "+channelName) << " :" << customMessage;
 	debugResponse(ss.str());
 	return ss.str();
 }
 std::string ResponseMsg::nicknameChangeResponse(const std::string& oldNickname, const std::string& newNickname)
 {
 	std::stringstream ss;
-	ss << ":" << oldNickname << " NICK :" << newNickname;
+	ss << ":" << oldNickname << " NICK " << newNickname;
+	debugResponse(ss.str());
 	return ss.str();
 }
 
-std::string ResponseMsg::joinConfirmResponse(const Client &client, const std::string &channelName)
+std::string ResponseMsg::joinConfirmResponse(const Client& client, const std::string& channelName)
 {
 	std::stringstream ss;
 	ss << ":" << client.getNickname() << "!" << client.getUsername() << "@" << client.getHostname() << " JOIN :" << channelName;
+	debugResponse(ss.str());
 	return ss.str();
 }
 std::string ResponseMsg::pongResponse(const std::string& message)
 {
 	std::stringstream ss;
 	ss << "PONG :" << message;
+	debugResponse(ss.str());
 	return ss.str();
 }

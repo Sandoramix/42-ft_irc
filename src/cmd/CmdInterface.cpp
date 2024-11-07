@@ -48,7 +48,7 @@ bool CmdInterface::checkForAuthOrSendErrorAndThrow(Client& requestedFrom) const
 {
 	if (this->authenticationRequired) {
 		if (!requestedFrom.isFullyRegistered()) {
-			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname()));
+			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname(), ""));
 			throw CmdInterface::CmdSyntaxErrorException("Not authenticated");
 		}
 		return (true);

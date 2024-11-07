@@ -26,6 +26,7 @@ typedef std::vector<PollFd> AllPollFdsVector;
 
 
 # define RESET "\033[0m"
+# define RED "\033[31m"
 # define MAGENTA "\033[35m"
 # define YELLOW "\033[33m"
 # define GREEN "\033[32m"
@@ -36,8 +37,8 @@ typedef std::vector<PollFd> AllPollFdsVector;
 
 /// Prints a debug message if DEBUG is true
 #if DEBUG==true
-# define debug(x) std::cerr << GREY << "[DEBUG]\t\t\t" << x << RESET << std::endl
-# define debugResponse(x) std::cerr << BLUE BOLD << "[RESPONSE]\t\t" << x << RESET << std::endl
+# define debug(x) std::cerr << GREY << "[DEBUG]\t\t" << x << RESET << std::endl
+# define debugResponse(x) std::cerr << BLUE BOLD << "[RESPONSE]\t" << x << RESET << std::endl
 # define debugError(x) std::cerr << MAGENTA << "[DEBUG-ERROR]\t" << x << RESET << std::endl
 # define debugWarning(x) std::cerr << YELLOW << "[DEBUG-WARNING]\t" << x << RESET << std::endl
 # define debugSuccess(x) std::cerr << GREEN << "[DEBUG-SUCCESS]\t" << x << RESET << std::endl
