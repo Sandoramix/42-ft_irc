@@ -3,14 +3,22 @@
 #include "ResponseMsg.hpp"
 
 KickCmd::KickCmd(Server& server)
-    : CmdInterface("KICK", server, true) {
+    : CmdInterface("KICK", server, true, true, false) {
 }
+
+//authentication required == true
+//if the command should look for a colon ':' == true 
+//is colon required == false
 
 KickCmd::~KickCmd() {}
 
 
-void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params) {
-    // Check if the user has provided the required parameters: <channel> <user>
+//for /KICK
+//<channel> <user> [:reason]
+
+void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
+{
+    // Check the required parameters: <channel> <user> //channelName //targetNickname
     if (params.size() < 2) {
         requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "KICK <channel> <user>"));
         return;
@@ -21,7 +29,8 @@ void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 
     // Check if the channel exists
     Channel* channel = server.getChannelByName(channelName);
-    if (!channel) {
+    if (!channel)
+    {
         requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), "", "No such channel: " + channelName));
         return;
     }
