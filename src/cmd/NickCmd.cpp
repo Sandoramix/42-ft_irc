@@ -33,8 +33,9 @@ void NickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 	}
 	requestedFrom.setIsNickCmdSent(true);
 	requestedFrom.setNickname(params[0]);
-	if (requestedFrom.getIsUserCmdSent() && requestedFrom.getIsNickCmdSent()){
+	if (requestedFrom.getIsUserCmdSent() && requestedFrom.getIsNickCmdSent() && !requestedFrom.isFullyRegistered()){
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_WELCOME, requestedFrom.getNickname()));
 		requestedFrom.setState(CS_ISFULLY_REGISTERED);
 	}
-	this->server.notifyClientOfNicknameChange(requestedFrom, oldNickname);
+	this->server.notifyClientNicknameChangeToOthers(requestedFrom, oldNickname);
 }

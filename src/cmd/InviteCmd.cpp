@@ -13,9 +13,5 @@ void InviteCmd::run(Client& requestedFrom, const std::vector<std::string>& param
 {
 	(void)params;
 	(void)requestedFrom;
-	if (!this->canUserRun(requestedFrom)) {
-		// TODO: send error message
-		return;
-	}
 	// TODO: implement
 }

@@ -17,9 +17,11 @@ SRC = ./src/Channel.cpp \
 	./src/cmd/ModeCmd.cpp \
 	./src/cmd/NickCmd.cpp \
 	./src/cmd/PassCmd.cpp \
+	./src/cmd/PingCmd.cpp \
 	./src/cmd/TopicCmd.cpp \
 	./src/cmd/UserCmd.cpp \
 	./src/main.cpp
+
 
 
 

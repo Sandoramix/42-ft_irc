@@ -14,11 +14,6 @@ void JoinCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
     std::vector<std::string> copiedParams(params);
 	(void)params;
 	(void)requestedFrom;
-	if (!this->canUserRun(requestedFrom)) {
-		// TODO: send error message
-        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname()));
-		return;
-	}
     
     // check for atleast 1 arg
 

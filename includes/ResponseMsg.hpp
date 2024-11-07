@@ -46,6 +46,7 @@ public:
 
 	static std::string nicknameChangeResponse(const std::string& oldNickname, const std::string& newNickname);
 	static std::string joinConfirmResponse(const Client &client, const std::string &channelName);
+	static std::string pongResponse(const std::string& message);
 };
 
 #endif //FT_IRC_RESPONSEMSG_HPP

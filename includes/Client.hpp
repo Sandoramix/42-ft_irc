@@ -49,7 +49,7 @@ public:
 	Client(const int& socketFd);
 	~Client();
 
-	bool isAuthenticated() const;
+	bool isFullyRegistered() const;
 
 public:
 	bool sendMessage(const std::string& message) const;

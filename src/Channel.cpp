@@ -72,7 +72,7 @@ bool Channel::addClient(Client* client)
 	if (this->isInviteOnly) {
 		const bool wasInvited = this->isClientInvited(client);
 		if (!wasInvited) {
-			debug("Client[" << client->getSocketFd() << "] tried to join channel[" << this->name << "] but it is invite only");
+			debugWarning("Client[" << client->getSocketFd() << "] tried to join channel[" << this->name << "] but it is invite only");
 			return false;
 		}
 		this->invitedClients.erase(std::find(this->invitedClients.begin(), this->invitedClients.end(), client->getSocketFd()));

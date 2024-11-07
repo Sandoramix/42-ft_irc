@@ -75,11 +75,11 @@ public:
 	~Server();
 	void run();
 
-	bool isPasswordValid(const std::string& password) const;
+	bool isPasswordValid(const std::string& passwordToCheck) const;
 
 	Client *findClientByNickname(const std::string& nickname) const;
 
-	void notifyClientOfNicknameChange(Client& client, const std::string& oldNickname);
+	void notifyClientNicknameChangeToOthers(Client& client, const std::string& oldNickname);
 
 	Channel* addChannel(const std::string &name, bool isPrivate);
 

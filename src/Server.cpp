@@ -44,11 +44,15 @@ Server::~Server()
 	}
 	this->commands.clear();
 
-	for (ClientsMap::iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
-		delete it->second;
-	}
 	for (ChannelsMap::iterator it = this->channels.begin(); it!=this->channels.end(); ++it) {
 		delete it->second;
+	}
+	for (ClientsMap::iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
+		Client* client = it->second;
+		if (client) {
+			close(client->getSocketFd());
+			delete client;
+		}
 	}
 	this->clients.clear();
 }
@@ -139,7 +143,7 @@ void Server::acceptConnection()
 	this->allPollFds.back().fd = clientFd;
 	this->allPollFds.back().events = POLLIN | POLLHUP;
 
-	debug("New user connected. Socket fd: " << clientFd);
+	debugInfo("New user connected. Socket fd: " << clientFd);
 }
 
 void Server::receiveClientMessage(Client* client)
@@ -154,7 +158,6 @@ void Server::receiveClientMessage(Client* client)
 		client->setLocalBuffer(client->getLocalBuffer()+buffer);
 	}
 	else if (bytesRead==0) {
-		// Client closed connection
 		disconnected = true;
 	}
 	else if (bytesRead==-1) {
@@ -195,7 +198,7 @@ bool Server::tryToRunClientCommand(Client* client)
 		return false;
 	}
 
-	debug("Command parsing started for client[" << client->getSocketFd() << "]. Buffer=\"" << client->getLocalBuffer() << "\"");
+	debug("Command parsing started for client[" << client->getSocketFd() << "].");
 
 	findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 
@@ -217,7 +220,7 @@ bool Server::tryToRunClientCommand(Client* client)
 		if (this->commands.find(commandName)==this->commands.end()) {
 			client->sendMessage(ResponseMsg::genericResponse(ERR_UNKNOWNCOMMAND, client->getNickname()));
 
-			debug("Unknown command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", command=" << commandArgs);
+			debugError("Client[" << client->getSocketFd() << "] tried to run unknown command [" << commandName << "] with arguments \"" << commandArgs << "\"");
 
 			findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 			continue;
@@ -225,20 +228,27 @@ bool Server::tryToRunClientCommand(Client* client)
 		CmdInterface* cmd = this->commands[commandName];
 		commandCount++;
 
-		// Get command parameters (may be different for some commands (e.g. PASS))
+		debug("Client[" << client->getSocketFd() << "]: parsing command [" << commandName << "] with arguments \"" << commandArgs << "\"");
+
 		try {
 			std::vector<std::string> params = cmd->parseArgs(commandArgs);
-			debug("Command received from client[" << client->getSocketFd() << "]. commandName=" << commandName << ", args=" << params << "(size=" << params.size() << ")");
+			debug("Client[" << client->getSocketFd() << "]: command [" << commandName << "] parsed successfully. Args=" << params << "(size=" << params.size() << ")");
+
+			cmd->checkForAuthOrSendErrorAndThrow(*client);
 
 			cmd->run(*client, params);
-		} catch (CmdInterface::CmdSyntaxErrorException& e) {
-			std::cerr << "Syntax error: " << e.what() << std::endl;
+		}
+		catch (CmdInterface::CmdSyntaxErrorException& e) {
+			debugError("Client[" << client->getSocketFd() << "] tried to run command [" << commandName << "] but provided invalid arguments. Error: " << e.what());
 			client->sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, client->getNickname(), "", e.what()));
+		}
+		catch (CmdInterface::CmdAuthErrorException& e) {
+			debugError("Client[" << client->getSocketFd() << "] tried to run command [" << commandName << "] but is not authenticated");
+			client->sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, client->getNickname()));
 		}
 
 		findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 	};
-	debug("Command parsing finished for client[" << client->getSocketFd() << "]. Commands found=" << commandCount);
 	return commandCount>0;
 }
 
@@ -250,16 +260,17 @@ bool Server::sendMessageToClient(Client* client, const std::string& message) con
 
 bool Server::sendMessageToChannel(Channel* channel, const std::string& message) const
 {
-	// TODO: add checks for channel permissions and so on.
+	// TODO: add checks for channel permissions and so on (?).
 	if (!channel) {
 		return false;
 	}
 	ClientsVector channelClients = channel->getAllClients();
 	bool error = false;
 	for (ClientsVector::iterator it = channelClients.begin(); it!=channelClients.end(); ++it) {
-		bool sent = this->sendMessageToClient(*it, message);
+		Client *client = *it;
+		bool sent = this->sendMessageToClient(client, message);
 		if (!sent) {
-			debug("Error while sending message to channel[" << channel->getName() << "]. Client[" << (*it)->getSocketFd() << "]");
+			debugWarning("Client[" << client->getSocketFd() << "] tried to send message to channel[" << channel->getName() << "] but the message was not sent");
 			error = true;
 		}
 	}
@@ -271,7 +282,7 @@ void Server::deleteDisconnectedClients()
 	ClientsMap::iterator client = this->clients.begin();
 	while (client!=this->clients.end()) {
 		if (client->second && client->second->getState()==CS_DISCONNECTED) {
-			debug("FD[" << client->first << "] Client disconnected. Deleting client...");
+			debug("Client[" << client->first << "] disconnected. Deleting client...");
 			// Close socket && delete client
 			close(client->first);
 			delete client->second;
@@ -284,6 +295,11 @@ void Server::deleteDisconnectedClients()
 					break;
 				}
 			}
+//			for(ChannelsMap::iterator channelMapIt = this->channels.begin(); channelMapIt!=this->channels.end(); ++channelMapIt) {
+//				if (!channelMapIt->second) { continue; }
+//				debug("Client[" << client->first << "] is getting removed from channel[" << channelMapIt->second->getName() << "]");
+//				channelMapIt->second->removeClient(client->second);
+//			}
 			this->clients.erase(client++);
 			// TODO: remove client from it's channels
 		}
@@ -332,7 +348,7 @@ void Server::run()
 					}
 					else if (clientPoll->revents & POLLIN) {
 						// receive && parse message
-						debug("Receiving message from fd[" << clientPoll->fd << "]...");
+						debugInfo("Client[" << clientPoll->fd << "] has sent a message. Receiving...");
 						this->receiveClientMessage(this->clients[clientPoll->fd]);
 						this->tryToRunClientCommand(this->clients[clientPoll->fd]);
 					}
@@ -346,7 +362,7 @@ void Server::run()
 
 // OTHER PUBLIC METHODS USED BY THE COMMANDS -----------------------------------
 
-bool Server::isPasswordValid(const std::string& password) const { return this->password==password; }
+bool Server::isPasswordValid(const std::string& passwordToCheck) const { return this->password==passwordToCheck; }
 
 Client* Server::findClientByNickname(const std::string& nickname) const
 {
@@ -358,31 +374,33 @@ Client* Server::findClientByNickname(const std::string& nickname) const
 	return NULL;
 }
 
-void Server::notifyClientOfNicknameChange(Client& client, const std::string& oldNickname)
+void Server::notifyClientNicknameChangeToOthers(Client& client, const std::string& oldNickname)
 {
 	ClientsMap receivers;
-   
-	receivers[client.getSocketFd()] = &client;
+
 	for (ChannelsMap::iterator it = this->channels.begin(); it!=this->channels.end(); ++it) {
 		if (!it->second) { continue; }
 		if (it->second->isClientInChannel(&client)) {
 			ClientsVector channelClients = it->second->getAllClients();
-			for (ClientsVector::iterator c = channelClients.begin(); c != channelClients.end(); ++c){
-				if (*c){
-					receivers[(*c)->getSocketFd()] = *c;
-				}
+			for (ClientsVector::iterator c = channelClients.begin(); c!=channelClients.end(); ++c) {
+				Client* currentClient = *c;
+				if (!currentClient) { continue; }
+				receivers[currentClient->getSocketFd()] = currentClient;
 			}
 		}
 	}
-	for (ClientsMap::iterator it = receivers.begin(); it!=receivers.end(); ++it){
+	ClientsMap::iterator clientWithChangedNickIt = receivers.find(client.getSocketFd());
+	if (clientWithChangedNickIt!=receivers.end() && clientWithChangedNickIt->second) {
+		receivers.erase(clientWithChangedNickIt);
+	}
+	for (ClientsMap::iterator it = receivers.begin(); it!=receivers.end(); ++it) {
 		this->sendMessageToClient(it->second, ResponseMsg::nicknameChangeResponse(oldNickname, client.getNickname()));
 	}
 }
 
-
-Channel* Server::addChannel(const std::string &name, bool isPrivate)
+Channel* Server::addChannel(const std::string& name, bool isPrivate)
 {
-	if(getChannelByName(name) == NULL)
+	if (getChannelByName(name)==NULL)
 		this->channels[name] = new Channel(*this, name, "", isPrivate);
 	return this->channels[name];
 }
@@ -392,8 +410,9 @@ Channel* Server::addChannel(const std::string &name, bool isPrivate)
 
 const std::string& Server::getRetrievedHostname() const { return this->retrievedHostname; }
 
-Channel* Server::getChannelByName(const std::string &channelName) {
-	if (this->channels.find(channelName) == this->channels.end())
+Channel* Server::getChannelByName(const std::string& channelName)
+{
+	if (this->channels.find(channelName)==this->channels.end())
 		return NULL;
 	return this->channels[channelName];
 }

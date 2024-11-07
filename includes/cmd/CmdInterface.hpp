@@ -34,8 +34,12 @@ public:
 	/// Try to parse the command arguments from the client buffer. It is virtual so that some commands can override it.
 	virtual std::vector<std::string> parseArgs(const std::string& argsWithoutCommand);
 
-protected:
-	virtual bool canUserRun(Client& requestedFrom) const;
+	/**
+	 * If the command requires authentication, check if the client is authenticated and throw an exception if not.
+	 * @param requestedFrom client that is trying to run the command
+	 * @return true if the client is authenticated, false otherwise (exception is thrown)
+	 */
+	virtual bool checkForAuthOrSendErrorAndThrow(Client& requestedFrom) const;
 
 public:
 	class CmdSyntaxErrorException : public std::exception {
@@ -44,6 +48,15 @@ public:
 	public:
 		explicit CmdSyntaxErrorException(const std::string& specificReason);
 		virtual ~CmdSyntaxErrorException() throw();
+		virtual const char* what() const throw();
+	};
+
+	class CmdAuthErrorException : public std::exception {
+	private:
+		std::string msg;
+	public:
+		explicit CmdAuthErrorException(const std::string& specificReason);
+		virtual ~CmdAuthErrorException() throw();
 		virtual const char* what() const throw();
 	};
 };

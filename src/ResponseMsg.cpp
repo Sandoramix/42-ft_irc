@@ -11,7 +11,7 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 {
 	switch (code) {
 	case RPL_WELCOME:
-		return "Welcome to the IRC Server @ " + hostname;
+		return "Welcome to the 42Firenze IRC Server@" + hostname;
 	case ERR_UNKNOWNCOMMAND:
 		return "Unknown command";
 	case ERR_ERRONEUSNICKNAME:
@@ -71,6 +71,7 @@ std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& t
 	std::string codeAsString = codeStream.str();
 
 	ss << ":" << host << " " << codeAsString << " " << (target.empty() ? "*" : target) << (channelName.empty() ? "" : " " + channelName) << " :" << customMessage;
+	debugResponse(ss.str());
 	return ss.str();
 }
 std::string ResponseMsg::nicknameChangeResponse(const std::string& oldNickname, const std::string& newNickname)
@@ -84,5 +85,11 @@ std::string ResponseMsg::joinConfirmResponse(const Client &client, const std::st
 {
 	std::stringstream ss;
 	ss << ":" << client.getNickname() << "!" << client.getUsername() << "@" << client.getHostname() << " JOIN :" << channelName;
+	return ss.str();
+}
+std::string ResponseMsg::pongResponse(const std::string& message)
+{
+	std::stringstream ss;
+	ss << "PONG :" << message;
 	return ss.str();
 }

@@ -23,7 +23,7 @@ Client::Client(const int& socketFd)
 
 Client::~Client() { }
 
-bool Client::isAuthenticated() const { return (this->state==CS_ISFULLY_REGISTERED); }
+bool Client::isFullyRegistered() const { return (this->state==CS_ISFULLY_REGISTERED); }
 
 bool Client::sendMessage(const std::string& message) const
 {

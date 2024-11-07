@@ -11,8 +11,9 @@ void CmdInterface::run(Client& requestedFrom, const std::vector<std::string>& pa
 {
 	(void)requestedFrom;
 	(void)params;
-	throw std::runtime_error("Not implemented.");
+	throw std::runtime_error("CmdInterface::run() not implemented. This is a bug because it doesn't make sense to call this method.");
 }
+
 // TODO: per la ricerca del colon (:) se trovato, lasciarlo come primo carattere dell'ultimo argomento
 std::vector<std::string> CmdInterface::parseArgs(const std::string& argsWithoutCommand)
 {
@@ -33,7 +34,7 @@ std::vector<std::string> CmdInterface::parseArgs(const std::string& argsWithoutC
 		colonPos = this->checkForColon ? copy.find(':') : std::string::npos;
 	}
 	if (this->checkForColon && colonPos!=std::string::npos) {
-		if (colonPos != 0 && copy[colonPos-1]!=' ') {
+		if (colonPos!=0 && copy[colonPos-1]!=' ') {
 			throw CmdSyntaxErrorException("invalid colon position");
 		}
 		copy = copy.substr(colonPos+1);
@@ -43,27 +44,24 @@ std::vector<std::string> CmdInterface::parseArgs(const std::string& argsWithoutC
 	}
 	return args;
 }
-bool CmdInterface::canUserRun(Client& requestedFrom) const
+bool CmdInterface::checkForAuthOrSendErrorAndThrow(Client& requestedFrom) const
 {
 	if (this->authenticationRequired) {
-		return (requestedFrom.isAuthenticated());
+		if (!requestedFrom.isFullyRegistered()) {
+			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname()));
+			throw CmdInterface::CmdSyntaxErrorException("Not authenticated");
+		}
+		return (true);
 	}
 	return (true);
 }
 
 // EXCEPTIONS -----------------------------------------------------------------
 
-CmdInterface::CmdSyntaxErrorException::CmdSyntaxErrorException(const std::string& specificReason)
-{
-	if (specificReason.empty()) {
-		msg += "Invalid syntax";
-	}
-	else if (specificReason.find("Invalid syntax")!=std::string::npos) {
-		msg = specificReason;
-	}
-	else {
-		msg += "Invalid syntax: "+specificReason;
-	}
-}
+CmdInterface::CmdSyntaxErrorException::CmdSyntaxErrorException(const std::string& specificReason) { this->msg = specificReason; }
 CmdInterface::CmdSyntaxErrorException::~CmdSyntaxErrorException() throw() { }
 const char* CmdInterface::CmdSyntaxErrorException::what() const throw() { return this->msg.c_str(); }
+
+CmdInterface::CmdAuthErrorException::CmdAuthErrorException(const std::string& specificReason) { this->msg = specificReason; }
+CmdInterface::CmdAuthErrorException::~CmdAuthErrorException() throw() { }
+const char* CmdInterface::CmdAuthErrorException::what() const throw() { return this->msg.c_str(); }
