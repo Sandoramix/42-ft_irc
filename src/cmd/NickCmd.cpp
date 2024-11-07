@@ -16,7 +16,7 @@ void NickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 		return;
 	}
 	const std::string& newNickname = params[0];
-	if (newNickname.empty() || !isalnum(newNickname[0])) {
+	if (newNickname.empty() || (!isalnum(newNickname[0]) && newNickname!="*")) {
 		debugError("Client[" << requestedFrom.getSocketFd() << "] tried to change nickname to invalid nickname");
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_ERRONEUSNICKNAME, requestedFrom.getNickname()));
 		return;

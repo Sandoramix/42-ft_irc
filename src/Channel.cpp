@@ -39,6 +39,7 @@ bool Channel::isClientInvited(Client* client) const
 	return std::find(this->invitedClients.begin(), this->invitedClients.end(), client->getSocketFd())!=this->invitedClients.end();
 }
 
+
 ClientsVector Channel::getAllClients() const
 {
 	ClientsVector result;
@@ -91,12 +92,15 @@ bool Channel::removeClient(Client* client)
 		this->operatorClients.erase(std::find(this->operatorClients.begin(), this->operatorClients.end(), client->getSocketFd()));
 	}
 
+	this->clients.erase(client->getSocketFd());
+	
 	if (this->operatorClients.empty() && !this->clients.empty()) {
-		debug("Client[" << client->getSocketFd() << "] left channel as last operator. Promoting client[" << this->clients[0]->getSocketFd() << "] to operator");
-		this->operatorClients.push_back(this->clients[0]->getSocketFd());
+		debug("Client[" << client->getSocketFd() << "] left channel as last operator.");
+		Client *newOperator = this->clients.begin()->second;
+		debug("Promoting client[" << newOperator->getSocketFd() << "] to operator");
+		this->operatorClients.push_back(newOperator->getSocketFd());
 	}
 
-	this->clients.erase(client->getSocketFd());
 
 	return true;
 }

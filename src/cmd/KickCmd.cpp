@@ -34,10 +34,14 @@ void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
         requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), "", "No such channel: " + channelName));
         return;
     }
+    if (!channel->isClientInChannel(&requestedFrom)){
+        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), channelName, "You are not inside this channel"));
+        return;
+    }
 
     // Verify that the client is an operator in the channel
     if (!channel->isClientOperator(&requestedFrom)) {
-        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), "", "You are not a channel operator"));
+        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), channelName, "You are not a channel operator"));
         return;
     }
 
@@ -52,5 +56,6 @@ void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
     channel->removeClient(targetClient);
     std::string kickMessage = ":" + requestedFrom.getNickname() + " KICK " + channelName + " " + targetNickname;
     server.sendMessageToChannel(channel, kickMessage);
-    targetClient->sendMessage("You have been kicked from " + channelName + " by " + requestedFrom.getNickname());
+    // TODO cambia la response CODE
+    targetClient->sendMessage(ResponseMsg::genericResponse(ERR_USERNOTINCHANNEL, requestedFrom.getNickname(), channelName, "You have been kicked from " + channelName + " by " + requestedFrom.getNickname()));
 }

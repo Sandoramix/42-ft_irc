@@ -13,7 +13,7 @@ void CmdInterface::run(Client& requestedFrom, const std::vector<std::string>& pa
 	(void)params;
 	throw std::runtime_error("Not implemented.");
 }
-
+// TODO: per la ricerca del colon (:) se trovato, lasciarlo come primo carattere dell'ultimo argomento
 std::vector<std::string> CmdInterface::parseArgs(const std::string& argsWithoutCommand)
 {
 	std::string copy(argsWithoutCommand);

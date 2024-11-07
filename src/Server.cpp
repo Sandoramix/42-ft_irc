@@ -360,11 +360,22 @@ Client* Server::findClientByNickname(const std::string& nickname) const
 
 void Server::notifyClientOfNicknameChange(Client& client, const std::string& oldNickname)
 {
-	for (std::map<std::string, Channel*>::iterator it = this->channels.begin(); it!=this->channels.end(); ++it) {
+	ClientsMap receivers;
+   
+	receivers[client.getSocketFd()] = &client;
+	for (ChannelsMap::iterator it = this->channels.begin(); it!=this->channels.end(); ++it) {
 		if (!it->second) { continue; }
 		if (it->second->isClientInChannel(&client)) {
-			this->sendMessageToChannel(it->second, ResponseMsg::nicknameChangeResponse(oldNickname, client.getNickname()));
+			ClientsVector channelClients = it->second->getAllClients();
+			for (ClientsVector::iterator c = channelClients.begin(); c != channelClients.end(); ++c){
+				if (*c){
+					receivers[(*c)->getSocketFd()] = *c;
+				}
+			}
 		}
+	}
+	for (ClientsMap::iterator it = receivers.begin(); it!=receivers.end(); ++it){
+		this->sendMessageToClient(it->second, ResponseMsg::nicknameChangeResponse(oldNickname, client.getNickname()));
 	}
 }
 
