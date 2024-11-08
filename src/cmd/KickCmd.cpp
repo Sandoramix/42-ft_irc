@@ -55,7 +55,7 @@ void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
     // Perform the kick action
     channel->removeClient(targetClient);
     std::string kickMessage = ":" + requestedFrom.getNickname() + " KICK " + channelName + " " + targetNickname;
-    server.sendMessageToChannel(channel, kickMessage);
+	server.sendMessageToChannel(channel, std::vector<SocketFd>(), kickMessage);
     // TODO cambia la response CODE
     targetClient->sendMessage(ResponseMsg::genericResponse(ERR_USERNOTINCHANNEL, requestedFrom.getNickname(), channelName, "You have been kicked from " + channelName + " by " + requestedFrom.getNickname()));
 }

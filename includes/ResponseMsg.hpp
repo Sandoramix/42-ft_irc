@@ -15,7 +15,10 @@ enum ResponseCode {
 	RPL_NAMREPLY = 353,
 	RPL_ENDOFNAMES = 366,
 	// Error replies
+	ERR_NOSUCHNICK = 401,
 	ERR_NOSUCHCHANNEL = 403,
+	ERR_CANNOTSENDTOCHAN = 404,
+	ERR_NOTEXTTOSEND = 412,
 	ERR_UNKNOWNCOMMAND = 421,
 	ERR_ERRONEUSNICKNAME = 432,
 	ERR_NICKNAMEINUSE = 433,
@@ -47,6 +50,7 @@ public:
 	static std::string nicknameChangeResponse(const std::string& oldNickname, const std::string& newNickname);
 	static std::string joinConfirmResponse(const Client &client, const std::string &channelName);
 	static std::string pongResponse(const std::string& message);
+	static std::string privMsgResponse(const std::string& sender, const std::string &target, const std::string& message);
 };
 
 #endif //FT_IRC_RESPONSEMSG_HPP

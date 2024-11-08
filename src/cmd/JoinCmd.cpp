@@ -56,8 +56,8 @@ void JoinCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
     channel->addClient(&requestedFrom);
 
     // Messaggio di conferma JOIN
-    requestedFrom.sendMessage(ResponseMsg::joinConfirmResponse(requestedFrom, channelName));
-    
+	this->server.sendMessageToChannel(channel, std::vector<SocketFd>(), ResponseMsg::joinConfirmResponse(requestedFrom, channelName));
+
     // Invio lista utenti
     std::string userList = channel->getClientsNicknames();
     requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_NAMREPLY, requestedFrom.getNickname(), "= " + channelName, userList));

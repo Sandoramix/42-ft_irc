@@ -83,7 +83,7 @@ public:
 
 	Channel* addChannel(const std::string &name, bool isPrivate);
 
-	bool sendMessageToChannel(Channel *channel, const std::string& message) const;
+	bool sendMessageToChannel(Channel* channel, const std::vector<SocketFd>& excludeClients, const std::string& message) const;
 
 // GETTERS/SETTERS
 public:

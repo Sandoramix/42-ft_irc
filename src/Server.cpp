@@ -12,6 +12,7 @@
 #include "cmd/NickCmd.hpp"
 #include "cmd/UserCmd.hpp"
 #include "cmd/PingCmd.hpp"
+#include "cmd/PrivMsgCmd.hpp"
 
 // CONSTRUCTOR
 Server::Server(const std::string& host, const std::string& port, const std::string& password)
@@ -71,6 +72,9 @@ void Server::initCommands()
 	commands["KICK"] = new KickCmd(*this);
 	commands["MODE"] = new ModeCmd(*this);
 	commands["TOPIC"] = new TopicCmd(*this);
+
+	commands["PRIVMSG"] = new PrivMsgCmd(*this);
+
 
 	commands["PING"] = new PingCmd(*this);
 
@@ -258,7 +262,7 @@ bool Server::sendMessageToClient(Client* client, const std::string& message) con
 	return client->sendMessage(message);
 }
 
-bool Server::sendMessageToChannel(Channel* channel, const std::string& message) const
+bool Server::sendMessageToChannel(Channel* channel, const std::vector<SocketFd>& excludeClients, const std::string& message) const
 {
 	// TODO: add checks for channel permissions and so on (?).
 	if (!channel) {
@@ -267,7 +271,12 @@ bool Server::sendMessageToChannel(Channel* channel, const std::string& message) 
 	ClientsVector channelClients = channel->getAllClients();
 	bool error = false;
 	for (ClientsVector::iterator it = channelClients.begin(); it!=channelClients.end(); ++it) {
+		if (!*it) { continue; }
+		// Skip clients that are in the exclude list
 		Client *client = *it;
+		if (std::find(excludeClients.begin(), excludeClients.end(), client->getSocketFd())!=excludeClients.end()) {
+			continue;
+		}
 		bool sent = this->sendMessageToClient(client, message);
 		if (!sent) {
 			debugWarning("Client[" << client->getSocketFd() << "] tried to send message to channel[" << channel->getName() << "] but the message was not sent");
@@ -383,6 +392,7 @@ void Server::notifyClientNicknameChangeToOthers(Client& client, const std::strin
 		if (it->second->isClientInChannel(&client)) {
 			ClientsVector channelClients = it->second->getAllClients();
 			for (ClientsVector::iterator c = channelClients.begin(); c!=channelClients.end(); ++c) {
+				if (!*c) { continue; }
 				Client* currentClient = *c;
 				if (!currentClient) { continue; }
 				receivers[currentClient->getSocketFd()] = currentClient;
@@ -396,6 +406,7 @@ void Server::notifyClientNicknameChangeToOthers(Client& client, const std::strin
 	for (ClientsMap::iterator it = receivers.begin(); it!=receivers.end(); ++it) {
 		this->sendMessageToClient(it->second, ResponseMsg::nicknameChangeResponse(oldNickname, client.getNickname()));
 	}
+	debugResponse(ResponseMsg::nicknameChangeResponse(oldNickname, client.getNickname()));
 }
 
 Channel* Server::addChannel(const std::string& name, bool isPrivate)

@@ -18,12 +18,10 @@ SRC = ./src/Channel.cpp \
 	./src/cmd/NickCmd.cpp \
 	./src/cmd/PassCmd.cpp \
 	./src/cmd/PingCmd.cpp \
+	./src/cmd/PrivMsgCmd.cpp \
 	./src/cmd/TopicCmd.cpp \
 	./src/cmd/UserCmd.cpp \
 	./src/main.cpp
-
-
-
 
 all: $(NAME)
 

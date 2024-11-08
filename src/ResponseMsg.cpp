@@ -12,6 +12,18 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 	switch (code) {
 	case RPL_WELCOME:
 		return "Welcome to the 42Firenze IRC Server@"+hostname;
+	case RPL_NAMREPLY:
+		return "<User list>";
+	case RPL_ENDOFNAMES:
+		return "End of /NAMES list.";
+	case ERR_NOSUCHNICK:
+		return "No such nick";
+	case ERR_NOSUCHCHANNEL:
+		return "No such channel";
+	case ERR_CANNOTSENDTOCHAN:
+		return "Cannot send to channel";
+	case ERR_NOTEXTTOSEND:
+		return "No text to send";
 	case ERR_UNKNOWNCOMMAND:
 		return "Unknown command";
 	case ERR_ERRONEUSNICKNAME:
@@ -28,6 +40,10 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 		return "Password incorrect";
 	case ERR_BADCHANNELKEY:
 		return "Cannot join channel";
+	case ERR_USERNOTINCHANNEL:
+		return "User is not in channel";
+	case ERR_CHANOPRIVSNEEDED:
+		return "You are not a channel operator";
 	default:
 		return "Unknown error";
 	}
@@ -77,7 +93,6 @@ std::string ResponseMsg::nicknameChangeResponse(const std::string& oldNickname, 
 {
 	std::stringstream ss;
 	ss << ":" << oldNickname << " NICK " << newNickname;
-	debugResponse(ss.str());
 	return ss.str();
 }
 
@@ -93,5 +108,12 @@ std::string ResponseMsg::pongResponse(const std::string& message)
 	std::stringstream ss;
 	ss << "PONG :" << message;
 	debugResponse(ss.str());
+	return ss.str();
+}
+std::string ResponseMsg::privMsgResponse(const std::string& sender, const std::string& target, const std::string& message)
+{
+	std::stringstream ss;
+
+	ss << ":" << sender << " PRIVMSG " << target << " :" << message;
 	return ss.str();
 }
