@@ -19,14 +19,15 @@ KickCmd::~KickCmd() {}
 
 void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
-    // Check the required parameters: <channel> <user> //channelName //targetNickname
-    if (params.size() < 2) {
-        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "KICK <channel> <user>"));
+    // Check the required parameters: <channel> <user> <channelName>/<targetNickname> [reason]
+    if (params.size() < 2 || params.size() > 3) {
+        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "KICK <channel> <user> [reason]"));
         return;
     }
 
     const std::string& channelName = params[0];
     const std::string& targetNickname = params[1];
+	const std::string& reasonMsg = params.size() == 3 ? params[2] : "";
 
     // Check if the channel exists
     Channel* channel = server.getChannelByName(channelName);
@@ -54,9 +55,6 @@ void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
     }
 
     // Perform the kick action
+	server.sendMessageToChannel(channel, std::vector<SocketFd>(), ResponseMsg::userKickedResponse(requestedFrom.getNickname(), targetClient->getNickname(), channelName, reasonMsg));
     channel->removeClient(targetClient);
-    std::string kickMessage = ":" + requestedFrom.getNickname() + " KICK " + channelName + " " + targetNickname;
-	server.sendMessageToChannel(channel, std::vector<SocketFd>(), kickMessage);
-    // TODO cambia la response CODE
-    targetClient->sendMessage(ResponseMsg::genericResponse(ERR_USERNOTINCHANNEL, requestedFrom.getNickname(), channelName, "You have been kicked from " + channelName + " by " + requestedFrom.getNickname()));
 }

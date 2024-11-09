@@ -89,10 +89,10 @@ std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& t
 	debugResponse(ss.str());
 	return ss.str();
 }
-std::string ResponseMsg::nicknameChangeResponse(const std::string& oldNickname, const std::string& newNickname)
+std::string ResponseMsg::nicknameChangeResponse(const Client& client, const std::string& newNickname)
 {
 	std::stringstream ss;
-	ss << ":" << oldNickname << " NICK " << newNickname;
+	ss << ":" << client.getNickname() << " NICK :" << newNickname;
 	return ss.str();
 }
 
@@ -115,5 +115,13 @@ std::string ResponseMsg::privMsgResponse(const std::string& sender, const std::s
 	std::stringstream ss;
 
 	ss << ":" << sender << " PRIVMSG " << target << " :" << message;
+	return ss.str();
+}
+std::string ResponseMsg::userKickedResponse(const std::string& kickerNickname, const std::string& kickedNickname, const std::string& channelName, const std::string& reason)
+{
+	std::stringstream ss;
+
+	ss << ":" << kickerNickname << " KICK " << channelName << " " << kickedNickname << (reason.empty() ? "" : " :" + reason);
+	debugResponse(ss.str());
 	return ss.str();
 }

@@ -47,10 +47,11 @@ public:
 	static std::string genericResponse(ResponseCode code, const std::string& target, const std::string& channelName);
 	static std::string genericResponse(ResponseCode code, const std::string& target, const std::string &channelName, const std::string& customMessage);
 
-	static std::string nicknameChangeResponse(const std::string& oldNickname, const std::string& newNickname);
+	static std::string nicknameChangeResponse(const Client& client, const std::string& newNickname);
 	static std::string joinConfirmResponse(const Client &client, const std::string &channelName);
 	static std::string pongResponse(const std::string& token);
 	static std::string privMsgResponse(const std::string& sender, const std::string &target, const std::string& message);
+	static std::string userKickedResponse(const std::string& kickerNickname, const std::string& kickedNickname, const std::string& channelName, const std::string& reason);
 };
 
 #endif //FT_IRC_RESPONSEMSG_HPP
