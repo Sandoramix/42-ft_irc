@@ -35,7 +35,6 @@ private:
 
 	std::string username;
 	std::string hostname;
-	std::string serverName;
 	std::string realName;
 
 	bool isUserCmdSent;
@@ -54,6 +53,7 @@ public:
 public:
 	bool sendMessage(const std::string& message) const;
 
+	std::string getUserInfo() const;
 
 /// GETTERS/SETTERS
 public:
@@ -63,7 +63,6 @@ public:
 	const std::string& getNickname() const;
 	const std::string& getUsername() const;
 	const std::string& getHostname() const;
-	const std::string& getServerName() const;
 	const std::string& getRealName() const;
 	const bool& getIsUserCmdSent() const;
 	const bool& getIsNickCmdSent() const;
@@ -74,7 +73,6 @@ public:
 	void setNickname(const std::string& nickname);
 	void setUsername(const std::string& username);
 	void setHostname(const std::string& hostname);
-	void setServerName(const std::string& serverName);
 	void setRealName(const std::string& realName);
 	void setIsUserCmdSent(const bool& isUserCmdSent);
 	void setIsNickCmdSent(const bool& isNickCmdSent);

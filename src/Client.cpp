@@ -1,7 +1,7 @@
 #include "Client.hpp"
 
 Client::Client(const Client& other)
-		:socketFd(other.socketFd), state(other.state), localBuffer(other.localBuffer), nickname(other.nickname), username(other.username), hostname(other.hostname), serverName(other.serverName),
+		:socketFd(other.socketFd), state(other.state), localBuffer(other.localBuffer), nickname(other.nickname), username(other.username), hostname(other.hostname),
 		 realName(other.realName), isUserCmdSent(other.isUserCmdSent), isNickCmdSent(other.isNickCmdSent) { }
 
 Client& Client::operator=(const Client& other)
@@ -17,9 +17,9 @@ Client& Client::operator=(const Client& other)
 	return *this;
 }
 Client::Client()
-		:state(CS_CONNECTED), localBuffer(), nickname(), username(), hostname(), serverName(), realName(), isUserCmdSent(false), isNickCmdSent(false) { }
+		:state(CS_CONNECTED), localBuffer(), nickname(), username(), hostname(), realName(), isUserCmdSent(false), isNickCmdSent(false) { }
 Client::Client(const int& socketFd)
-		:socketFd(socketFd), state(CS_CONNECTED), localBuffer(), nickname(), username(), hostname(), serverName(), realName(), isUserCmdSent(false), isNickCmdSent(false) { }
+		:socketFd(socketFd), state(CS_CONNECTED), localBuffer(), nickname(), username(), hostname(), realName(), isUserCmdSent(false), isNickCmdSent(false) { }
 
 Client::~Client() { }
 
@@ -36,6 +36,12 @@ bool Client::sendMessage(const std::string& message) const
 	}
 	return true;
 }
+
+std::string Client::getUserInfo() const
+{
+	return this->getNickname() + "!" + this->getUsername() + "@" + this->getHostname();
+}
+
 // GETTERS/SETTERS ------------------------------------------------------------
 
 const int& Client::getSocketFd() const { return socketFd; }
@@ -44,7 +50,6 @@ const std::string& Client::getLocalBuffer() const { return localBuffer; }
 const std::string& Client::getNickname() const { return nickname; }
 const std::string& Client::getUsername() const { return username; }
 const std::string& Client::getHostname() const { return hostname; }
-const std::string& Client::getServerName() const { return serverName; }
 const std::string& Client::getRealName() const { return realName; }
 const bool& Client::getIsUserCmdSent() const { return isUserCmdSent; }
 const bool& Client::getIsNickCmdSent() const { return isNickCmdSent; }
@@ -55,7 +60,6 @@ void Client::setLocalBuffer(const std::string& local_buffer) { this->localBuffer
 void Client::setHostname(const std::string& hostname) { this->hostname = hostname; }
 void Client::setNickname(const std::string& nickname) { this->nickname = nickname; }
 void Client::setUsername(const std::string& username) { this->username = username; }
-void Client::setServerName(const std::string& serverName) { this->serverName = serverName; }
 void Client::setRealName(const std::string& realName) { this->realName = realName; }
 void Client::setIsUserCmdSent(const bool& isUserCmdSent) { this->isUserCmdSent = isUserCmdSent; }
 void Client::setIsNickCmdSent(const bool& isNickCmdSent) { this->isNickCmdSent = isNickCmdSent; }
