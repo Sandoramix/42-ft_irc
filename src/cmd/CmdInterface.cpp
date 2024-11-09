@@ -1,7 +1,7 @@
 #include "cmd/CmdInterface.hpp"
 
-CmdInterface::CmdInterface(const std::string& commandName, Server& server, bool authenticationRequired, bool checkForColon, bool isColonRequired)
-		:authenticationRequired(authenticationRequired), commandName(commandName), server(server), checkForColon(checkForColon), isColonRequired(isColonRequired)
+CmdInterface::CmdInterface(const std::string& commandName, Server& server, bool authenticationRequired)
+		:authenticationRequired(authenticationRequired), commandName(commandName), server(server)
 {
 }
 
@@ -14,30 +14,29 @@ void CmdInterface::run(Client& requestedFrom, const std::vector<std::string>& pa
 	throw std::runtime_error("CmdInterface::run() not implemented. This is a bug because it doesn't make sense to call this method.");
 }
 
-// TODO: per la ricerca del colon (:) se trovato, lasciarlo come primo carattere dell'ultimo argomento
 std::vector<std::string> CmdInterface::parseArgs(const std::string& argsWithoutCommand)
 {
 	std::string copy(argsWithoutCommand);
 	std::vector<std::string> args;
 
-	size_t colonPos = this->checkForColon ? copy.find(':') : std::string::npos;
-	if (this->isColonRequired && colonPos==std::string::npos) {
-		throw CmdSyntaxErrorException("missing colon");
-	}
+	size_t colonPos = copy.find(':');
 
 	size_t pos = 0;
 	pos = copy.find(' ', 0);
-	while (pos!=std::string::npos && (!this->checkForColon || pos<colonPos)) {
+	while (pos!=std::string::npos && (colonPos==std::string::npos || pos<colonPos)) {
 		args.push_back(copy.substr(0, pos));
 		copy = copy.substr(pos+1);
 		pos = copy.find(' ', 0);
-		colonPos = this->checkForColon ? copy.find(':') : std::string::npos;
+		colonPos = copy.find(':');
 	}
-	if (this->checkForColon && colonPos!=std::string::npos) {
-		if (colonPos!=0 && copy[colonPos-1]!=' ') {
-			throw CmdSyntaxErrorException("invalid colon position");
+	if (colonPos!=std::string::npos) {
+		std::string preColonArg = copy.substr(0, colonPos);
+		if (!preColonArg.empty()){
+			args.push_back(preColonArg);
 		}
-		copy = copy.substr(colonPos+1);
+		copy = copy.substr(colonPos + 1);
+		args.push_back(copy);
+		copy = "";
 	}
 	if (!copy.empty()) {
 		args.push_back(copy);

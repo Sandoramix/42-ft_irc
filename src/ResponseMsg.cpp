@@ -103,10 +103,10 @@ std::string ResponseMsg::joinConfirmResponse(const Client& client, const std::st
 	debugResponse(ss.str());
 	return ss.str();
 }
-std::string ResponseMsg::pongResponse(const std::string& message)
+std::string ResponseMsg::pongResponse(const std::string& token)
 {
 	std::stringstream ss;
-	ss << "PONG :" << message;
+	ss << "PONG :" << token;
 	debugResponse(ss.str());
 	return ss.str();
 }

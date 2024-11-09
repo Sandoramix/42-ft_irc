@@ -1,7 +1,7 @@
 #include "cmd/PassCmd.hpp"
 
 PassCmd::PassCmd(Server& server)
-		:CmdInterface("PASS", server, false, true, false)
+		:CmdInterface("PASS", server, false)
 {
 }
 

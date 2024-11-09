@@ -21,11 +21,9 @@ protected:
 	bool authenticationRequired;
 	const std::string commandName;
 	Server& server;
-	const bool checkForColon;
-	const bool isColonRequired;
 
 public:
-	CmdInterface(const std::string& commandName, Server& server, bool authenticationRequired = true, bool checkForColon = false, bool isColonRequired = false);
+	CmdInterface(const std::string& commandName, Server& server, bool authenticationRequired = true);
 
 	virtual ~CmdInterface();
 

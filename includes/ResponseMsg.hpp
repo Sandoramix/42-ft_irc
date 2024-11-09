@@ -49,7 +49,7 @@ public:
 
 	static std::string nicknameChangeResponse(const std::string& oldNickname, const std::string& newNickname);
 	static std::string joinConfirmResponse(const Client &client, const std::string &channelName);
-	static std::string pongResponse(const std::string& message);
+	static std::string pongResponse(const std::string& token);
 	static std::string privMsgResponse(const std::string& sender, const std::string &target, const std::string& message);
 };
 

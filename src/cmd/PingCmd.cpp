@@ -1,7 +1,7 @@
 #include "cmd/PingCmd.hpp"
 
 PingCmd::PingCmd(Server& server)
-		:CmdInterface("PING", server, false, true, false)
+		:CmdInterface("PING", server, false)
 {
 }
 

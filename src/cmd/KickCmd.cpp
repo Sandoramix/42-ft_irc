@@ -3,7 +3,8 @@
 #include "ResponseMsg.hpp"
 
 KickCmd::KickCmd(Server& server)
-    : CmdInterface("KICK", server, true, true, false) {
+    :CmdInterface("KICK", server, true)
+{
 }
 
 //authentication required == true

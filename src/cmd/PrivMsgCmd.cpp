@@ -1,7 +1,7 @@
 #include "cmd/PrivMsgCmd.hpp"
 
 PrivMsgCmd::PrivMsgCmd(Server& server)
-		:CmdInterface("PRIVMSG", server, true, true, false)
+		:CmdInterface("PRIVMSG", server, true)
 {
 }
 

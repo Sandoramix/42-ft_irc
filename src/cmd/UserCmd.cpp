@@ -1,7 +1,7 @@
 #include "cmd/UserCmd.hpp"
 
 UserCmd::UserCmd(Server& server)
-		:CmdInterface("USER", server, false, false, false)
+		:CmdInterface("USER", server, false)
 {
 }
 
@@ -10,10 +10,24 @@ UserCmd::~UserCmd()
 }
 
 /**
- * <h3>Syntax</h3>
- * <pre>
- * USER USERNAME HOSTNAME SERVERNAME :REALNAME
- * </pre>
+ * <br>
+ * @brief The USER command is used to identify the user to the server. It is sent by the client to the server when the client connects to the server.
+ * <br><br>
+ *
+ * Syntax: USER \<username> \<mode> \<unused> \<realname>
+ *
+ *
+ * @note Exactly 4 parameters are required.
+ *
+ * <fieldset>
+ * 	<legend>Parameters</legend>
+ * 	<ul>
+ * 		<li><b>username</b>: the username of the user</li>
+ * 		<li><b>mode</b>: mode of the user. It wont be used in this implementation. Usually it is set to "0" by the client.</li>
+ * 		<li><b>unused</b>: unused parameter. It is ignored by the server. Usually it is set to "0" or "*" by the client.</li>
+ * 		<li><b>realname</b>: the realname of the user. It is used to set the realname of the user.</li>
+ * 	</ul>
+ * </fieldset>
  */
 void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
@@ -32,10 +46,12 @@ void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 		return;
 	}
 
-	requestedFrom.setUsername(params[0]);
-	requestedFrom.setHostname(params[1]);
-	requestedFrom.setServerName(params[2]);
-	requestedFrom.setRealName(params[3]);
+	std::string username = params[0];
+	requestedFrom.setUsername(username);
+//	std::string mode = params[1];
+//	std::string unused = params[2];
+	std::string realname = params[3];
+	requestedFrom.setRealName(realname);
 
 	requestedFrom.setIsUserCmdSent(true);
 	if (requestedFrom.getIsUserCmdSent() && requestedFrom.getIsNickCmdSent() && !requestedFrom.isFullyRegistered()){
