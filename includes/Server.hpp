@@ -79,7 +79,7 @@ public:
 
 	Client *findClientByNickname(const std::string& nickname) const;
 
-	void notifyClientNicknameChangeToOthers(Client& client, const std::string& oldNickname);
+	void notifyClientNicknameChangeToOthers(Client& client, const std::string& newNickname);
 
 	Channel* addChannel(const std::string &name, bool isPrivate);
 

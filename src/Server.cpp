@@ -146,11 +146,20 @@ void Server::acceptConnection()
 	}
 	this->clients[clientFd] = new Client(clientFd);
 
+	char hostname[NI_MAXHOST];
+	if (getnameinfo((struct sockaddr*)&addr, addr_len,hostname, sizeof(hostname),NULL, 0, NI_NAMEREQD) == 0) {
+		// If getnameinfo succeeded, use the hostname returned by getnameinfo
+	} else {
+		// If getnameinfo fails, use inet_ntop to convert the IP address to a string
+		inet_ntop(AF_INET, &(addr.sin_addr), hostname, sizeof(hostname));
+	}
+	this->clients[clientFd]->setHostname(hostname);
+
 	this->allPollFds.push_back(pollfd());
 	this->allPollFds.back().fd = clientFd;
 	this->allPollFds.back().events = POLLIN | POLLHUP;
 
-	debugSuccess("Client[" << clientFd << "]: new user connected.");
+	debugSuccess("Client[" << clientFd << "]: new user connected from " << hostname);
 }
 
 void Server::receiveClientMessage(Client* client)
@@ -383,10 +392,11 @@ Client* Server::findClientByNickname(const std::string& nickname) const
 	return NULL;
 }
 
-void Server::notifyClientNicknameChangeToOthers(Client& client, const std::string& oldNickname)
+void Server::notifyClientNicknameChangeToOthers(Client& client, const std::string& newNickname)
 {
 	ClientsMap receivers;
 
+	receivers[client.getSocketFd()] = &client;
 	for (ChannelsMap::iterator it = this->channels.begin(); it!=this->channels.end(); ++it) {
 		if (!it->second) { continue; }
 		if (it->second->isClientInChannel(&client)) {
@@ -399,14 +409,11 @@ void Server::notifyClientNicknameChangeToOthers(Client& client, const std::strin
 			}
 		}
 	}
-	ClientsMap::iterator clientWithChangedNickIt = receivers.find(client.getSocketFd());
-	if (clientWithChangedNickIt!=receivers.end() && clientWithChangedNickIt->second) {
-		receivers.erase(clientWithChangedNickIt);
-	}
+
 	for (ClientsMap::iterator it = receivers.begin(); it!=receivers.end(); ++it) {
-		this->sendMessageToClient(it->second, ResponseMsg::nicknameChangeResponse(oldNickname, client.getNickname()));
+		this->sendMessageToClient(it->second, ResponseMsg::nicknameChangeResponse(client, newNickname));
 	}
-	debugResponse(ResponseMsg::nicknameChangeResponse(oldNickname, client.getNickname()));
+	debugResponse(ResponseMsg::nicknameChangeResponse(client, newNickname));
 }
 
 Channel* Server::addChannel(const std::string& name, bool isPrivate)

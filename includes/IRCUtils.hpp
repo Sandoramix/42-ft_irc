@@ -10,13 +10,15 @@
 #include <map>
 #include <csignal>
 #include <cstdlib>
-#include <fcntl.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #include <poll.h>
 #include <algorithm>
 #include <iostream>
 #include <vector>
+
+#include <fcntl.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
 typedef int SocketFd;
 typedef struct sockaddr SocketAddr;
