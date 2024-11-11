@@ -36,7 +36,9 @@ void PrivMsgCmd::run(Client& requestedFrom, const std::vector<std::string>& para
 			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), targetClientOrChannel, "You are not a channel operator"));
 			return;
 		}
-		this->server.sendMessageToChannel(channel, std::vector<SocketFd>(requestedFrom.getSocketFd()), ResponseMsg::privMsgResponse(requestedFrom.getNickname(), targetClientOrChannel, messageToSend));
+		std::vector<SocketFd> excludeClients(1);
+		excludeClients[0] = requestedFrom.getSocketFd();
+		this->server.sendMessageToChannel(channel, excludeClients, ResponseMsg::privMsgResponse(requestedFrom.getNickname(), targetClientOrChannel, messageToSend));
 		debugResponse(ResponseMsg::privMsgResponse(requestedFrom.getNickname(), targetClientOrChannel, messageToSend));
 		return;
 	}

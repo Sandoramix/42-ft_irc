@@ -297,32 +297,37 @@ bool Server::sendMessageToChannel(Channel* channel, const std::vector<SocketFd>&
 
 void Server::deleteDisconnectedClients()
 {
-	ClientsMap::iterator client = this->clients.begin();
-	while (client!=this->clients.end()) {
-		if (client->second && client->second->getState()==CS_DISCONNECTED) {
-			debug("Client[" << client->first << "] disconnected. Deleting client...");
+	ClientsMap::iterator clientMapIt = this->clients.begin();
+	while (clientMapIt!=this->clients.end()) {
+		Client* client = clientMapIt->second;
+		if (client && client->getState()==CS_DISCONNECTED) {
+			debug("Client[" << clientMapIt->first << "] disconnected. Deleting client...");
 			// Close socket && delete client
-			close(client->first);
-			delete client->second;
-			client->second = NULL;
+			close(clientMapIt->first);
 
 			// Delete pollfd
 			for (AllPollFdsVector::iterator clientPoll = this->allPollFds.begin(); clientPoll!=this->allPollFds.end(); ++clientPoll) {
-				if (clientPoll->fd==client->first) {
+				if (clientPoll->fd==clientMapIt->first) {
 					this->allPollFds.erase(clientPoll);
 					break;
 				}
 			}
-//			for(ChannelsMap::iterator channelMapIt = this->channels.begin(); channelMapIt!=this->channels.end(); ++channelMapIt) {
-//				if (!channelMapIt->second) { continue; }
-//				debug("Client[" << client->first << "] is getting removed from channel[" << channelMapIt->second->getName() << "]");
-//				channelMapIt->second->removeClient(client->second);
-//			}
-			this->clients.erase(client++);
 			// TODO: remove client from it's channels
+			int removedChannelCount = 0;
+			for(ChannelsMap::iterator channelMapIt = this->channels.begin(); channelMapIt!=this->channels.end(); ++channelMapIt) {
+				Channel* channel = channelMapIt->second;
+				if (!channel) { continue; }
+				if (channel->removeClient(client)) {
+					removedChannelCount++;
+				}
+			}
+			debug("Client[" << clientMapIt->first << "] disconnected. Removed from " << removedChannelCount << " channels.");
+			this->clients.erase(clientMapIt++);
+
+			delete client;
 		}
 		else {
-			client++;
+			clientMapIt++;
 		}
 	}
 }
