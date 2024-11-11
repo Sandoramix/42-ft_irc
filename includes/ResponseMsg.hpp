@@ -12,6 +12,8 @@
  */
 enum ResponseCode {
 	RPL_WELCOME = 1,
+	RPL_NOTOPIC = 331,
+	RPL_TOPIC = 332,
 	RPL_NAMREPLY = 353,
 	RPL_ENDOFNAMES = 366,
 	// Error replies

@@ -12,8 +12,6 @@ JoinCmd::~JoinCmd()
 void JoinCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
     std::vector<std::string> copiedParams(params);
-	(void)params;
-	(void)requestedFrom;
     
     // check for atleast 1 arg
 

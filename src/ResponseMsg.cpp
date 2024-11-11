@@ -12,6 +12,8 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 	switch (code) {
 	case RPL_WELCOME:
 		return "Welcome to the 42Firenze IRC Server@"+hostname;
+	case RPL_NOTOPIC:
+		return "No topic is set";
 	case RPL_NAMREPLY:
 		return "<User list>";
 	case RPL_ENDOFNAMES:
