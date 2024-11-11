@@ -41,7 +41,7 @@ void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 		return;
 	}
 	if (params.size()!=4) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of parameters"));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of parameters. Usage: USER <username> <mode> <unused> <realname>"));
 		debugError("Client[" << requestedFrom.getSocketFd() << "] tried to register but invalid number of parameters was provided");
 		return;
 	}
@@ -58,31 +58,4 @@ void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 		requestedFrom.setState(CS_ISFULLY_REGISTERED);
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_WELCOME, requestedFrom.getNickname(), ""));
 	}
-}
-std::vector<std::string> UserCmd::parseArgs(const std::string& argsWithoutCommand)
-{
-	std::string copy(argsWithoutCommand);
-	std::vector<std::string> args;
-	size_t pos = 0;
-
-	pos = copy.find(' ');
-	// GET ONLY <USERNAME> <HOSTNAME> <SERVERNAME>
-	while (pos!=std::string::npos && args.size()<3) {
-		args.push_back(copy.substr(0, pos));
-		copy = copy.substr(pos+1);
-		pos = copy.find(' ');
-	}
-	if (args.size()<3) {
-		throw CmdSyntaxErrorException("missing parameters");
-	}
-	pos = copy.find(':');
-	if (pos==std::string::npos) {
-		throw CmdSyntaxErrorException("missing semicolon before last parameter");
-	}
-	copy = copy.substr(pos+1);
-	if (copy.empty()) {
-		throw CmdSyntaxErrorException("missing last parameter");
-	}
-	args.push_back(copy);
-	return args;
 }
