@@ -66,4 +66,11 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 	return os << "]";
 }
 
+namespace IRCUtils
+{
+	bool isValidChannelStartingCharacter(const std::string& channel);
+	bool isValidChannelName(const std::string& channel);
+};
+
+
 #endif //FT_IRC_IRCUTILS_HPP

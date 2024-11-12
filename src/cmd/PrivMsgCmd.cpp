@@ -26,7 +26,7 @@ void PrivMsgCmd::run(Client& requestedFrom, const std::vector<std::string>& para
 		return;
 	}
 	// IS CHANNEL
-	if (targetClientOrChannel[0]=='#') {
+	if (IRCUtils::isValidChannelStartingCharacter(targetClientOrChannel)) {
 		Channel* channel = server.getChannelByName(targetClientOrChannel);
 		if (!channel) {
 			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), targetClientOrChannel));

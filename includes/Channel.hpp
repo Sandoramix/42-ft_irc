@@ -9,9 +9,11 @@ class Channel;
 #include "Client.hpp"
 
 class Channel {
+public:
+	static const size_t MAX_CHANNEL_NAME_LENGTH = 50;
 // Assignable from constructor
 private:
-	const Server* server; // TODO: remove this?
+	const Server* server;
 	bool isPrivateChannel;
 	std::string name;
 	std::string topic;

@@ -3,11 +3,12 @@ NAME:=ircserv
 DEBUG:=true
 
 
-CXX:=clang++
-CXXFLAGS:=-std=c++98 -Wall -Wextra -Werror -g -DDEBUG=$(DEBUG) -I./includes
+CXX:=c++
+CXXFLAGS:=-std=c++98 -g -Wall -Wextra -Werror -DDEBUG=$(DEBUG) -I./includes
 
 SRC = ./src/Channel.cpp \
 	./src/Client.cpp \
+	./src/IRCUtils.cpp \
 	./src/ResponseMsg.cpp \
 	./src/Server.cpp \
 	./src/cmd/CmdInterface.cpp \
@@ -24,6 +25,9 @@ SRC = ./src/Channel.cpp \
 	./src/main.cpp
 
 all: $(NAME)
+
+debug: DEBUG:=true
+debug: all
 
 $(NAME): $(SRC)
 	$(CXX) $(CXXFLAGS) -o $@ $^
