@@ -2,7 +2,7 @@
 
 // CONSTRUCTOR
 Channel::Channel(const Server& server, const std::string& name, const std::string& topic)
-		:server(&server), name(name), topic(topic), maxClients(0), password(), isPasswordProtected(false), isInviteOnly(false), isTopicReadOnly(false) { (void)this->server; }
+		:server(&server), name(name), topic(topic), maxClients(0), password(), isPasswordProtected(false), isInviteOnly(false), isTopicChangePrivilege(false) { (void)this->server; }
 
 // DESTRUCTOR
 Channel::~Channel()
@@ -84,15 +84,12 @@ bool Channel::addClient(Client* client)
 	return true;
 }
 
-bool Channel::removeClient(Client* client)
-{
-	if (!this->isClientInChannel(client)) { return false; }
+bool Channel::removeOperator(Client* client){
+	if (!client) { return false; }
 
-	if (this->isClientOperator(client)) {
-		this->operatorClients.erase(std::find(this->operatorClients.begin(), this->operatorClients.end(), client->getSocketFd()));
-	}
-
-	this->clients.erase(client->getSocketFd());
+	if (!this->isClientOperator(client)) { return false;}
+	
+	this->operatorClients.erase(std::find(this->operatorClients.begin(), this->operatorClients.end(), client->getSocketFd()));
 	
 	if (this->operatorClients.empty() && !this->clients.empty()) {
 		debug("Client[" << client->getSocketFd() << "] left channel as last operator.");
@@ -100,6 +97,23 @@ bool Channel::removeClient(Client* client)
 		debug("Promoting client[" << newOperator->getSocketFd() << "] to operator");
 		this->operatorClients.push_back(newOperator->getSocketFd());
 	}
+
+	return true;
+}
+
+bool Channel::makeOperator(Client* client){
+	if (!client) { return false; }
+	this->operatorClients.push_back(client->getSocketFd());
+	return true;
+}
+
+bool Channel::removeClient(Client* client)
+{
+	if (!this->isClientInChannel(client)) { return false; }
+
+	this->clients.erase(client->getSocketFd());
+	
+	removeOperator(client);
 
 
 	return true;
@@ -137,7 +151,7 @@ const std::string& Channel::getPassword() const { return this->password; }
 bool Channel::getPasswordProtected() const { return this->isPasswordProtected; }
 size_t Channel::getMaxClients() const { return this->maxClients; }
 bool Channel::getIsInviteOnly() const { return this->isInviteOnly; }
-bool Channel::getIsTopicReadOnly() const { return this->isTopicReadOnly; }
+bool Channel::getIsTopicChangePrivilege() const { return this->isTopicChangePrivilege; }
 std::string Channel::getClientsNicknames() const
 {
 	std::string clientsNicknames = "";
@@ -159,7 +173,7 @@ void Channel::setName(const std::string& name) { this->name = name; }
 void Channel::setTopic(const std::string& topic)
 {
 	// TODO: check if this is needed
-	if (this->isTopicReadOnly) {
+	if (this->isTopicChangePrivilege) {
 		debug("Channel[" << this->name << "] is read only. Cannot set topic.");
 		return;
 	}
@@ -169,4 +183,4 @@ void Channel::setPassword(const std::string& password) { this->password = passwo
 void Channel::setPasswordProtected(bool passwordProtected) { this->isPasswordProtected = passwordProtected; }
 void Channel::setMaxClients(size_t maxClients) { this->maxClients = maxClients; }
 void Channel::setIsInviteOnly(bool isInviteOnly) { this->isInviteOnly = isInviteOnly; }
-void Channel::setIsTopicReadOnly(bool isTopicReadOnly) { this->isTopicReadOnly = isTopicReadOnly; }
+void Channel::setIsTopicChangePrivilege(bool isTopicChangePrivilege) { this->isTopicChangePrivilege = isTopicChangePrivilege; }

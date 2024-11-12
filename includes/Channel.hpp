@@ -9,8 +9,6 @@ class Channel;
 #include "Client.hpp"
 
 class Channel {
-public:
-	static const size_t MAX_CHANNEL_NAME_LENGTH = 50;
 // Assignable from constructor
 private:
 	const Server* server;
@@ -37,7 +35,7 @@ private:
 	bool isPasswordProtected;
 
 	bool isInviteOnly;
-	bool isTopicReadOnly;
+	bool isTopicChangePrivilege;
 
 
 
@@ -58,6 +56,8 @@ public:
 
 
 	bool addClient(Client* client);
+	bool makeOperator(Client* client);
+	bool removeOperator(Client* client);
 	bool removeClient(Client* client);
 	bool removeAllClients();
 
@@ -69,7 +69,7 @@ public:
 	bool getPasswordProtected() const;
 	size_t getMaxClients() const;
 	bool getIsInviteOnly() const;
-	bool getIsTopicReadOnly() const;
+	bool getIsTopicChangePrivilege() const;
 	std::string getClientsNicknames() const;
 	bool isPasswordValid(const std::string &passw) const;
 
@@ -79,7 +79,7 @@ public:
 	void setPasswordProtected(bool passwordProtected);
 	void setMaxClients(size_t maxClients);
 	void setIsInviteOnly(bool isInviteOnly);
-	void setIsTopicReadOnly(bool isTopicReadOnly);
+	void setIsTopicChangePrivilege(bool isTopicChangePrivilege);
 };
 
 #endif //FT_IRC_CHANNEL_HPP
