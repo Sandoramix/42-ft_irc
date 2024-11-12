@@ -32,6 +32,8 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 		return "Erroneous nickname";
 	case ERR_NICKNAMEINUSE:
 		return "Nickname is already in use";
+	case ERR_NOTONCHANNEL:
+		return "You're not on that channel";
 	case ERR_NOTREGISTERED:
 		return "You have not registered";
 	case ERR_NEEDMOREPARAMS:

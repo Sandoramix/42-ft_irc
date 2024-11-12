@@ -11,17 +11,19 @@ TopicCmd::~TopicCmd()
 
 void TopicCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
-	//verificare il caso in cui e' un canale privato
-
 	Channel * channel = server.getChannelByName(params[0]);
 	if (channel == NULL) {
         requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channel->getName()));
 		return;
     }
+	if (channel->getIsPrivateChannel() && !(channel->isClientInChannel(&requestedFrom))) {
+        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTONCHANNEL, requestedFrom.getNickname(), channel->getName()));
+		return;
+    }
 	if (params.size() == 1){
 		std::string topic = channel->getTopic();
 		if (topic == "")
-			requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_TOPIC, requestedFrom.getNickname(), channel->getName()));
+			requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_NOTOPIC, requestedFrom.getNickname(), channel->getName()));
 		else
 			requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_TOPIC, requestedFrom.getNickname(), channel->getName(), topic));
 	}
