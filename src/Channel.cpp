@@ -1,8 +1,8 @@
 #include "Channel.hpp"
 
 // CONSTRUCTOR
-Channel::Channel(const Server& server, const std::string& name, const std::string& topic, bool isPrivate)
-		:server(&server), isPrivateChannel(isPrivate), name(name), topic(topic), maxClients(0), password(), isPasswordProtected(false), isInviteOnly(false), isTopicReadOnly(false) { (void)this->server; }
+Channel::Channel(const Server& server, const std::string& name, const std::string& topic)
+		:server(&server), name(name), topic(topic), maxClients(0), password(), isPasswordProtected(false), isInviteOnly(false), isTopicReadOnly(false) { (void)this->server; }
 
 // DESTRUCTOR
 Channel::~Channel()
@@ -131,7 +131,6 @@ bool Channel::inviteClient(Client* client)
 
 // GETTERS/SETTERS ------------------------------------------------------------
 
-bool Channel::getIsPrivateChannel() const { return this->isPrivateChannel; }
 const std::string& Channel::getName() const { return this->name; }
 const std::string& Channel::getTopic() const { return this->topic; }
 const std::string& Channel::getPassword() const { return this->password; }
@@ -167,7 +166,6 @@ void Channel::setTopic(const std::string& topic)
 	this->topic = topic;
 }
 void Channel::setPassword(const std::string& password) { this->password = password; }
-void Channel::setIsPrivateChannel(bool isPrivate) { this->isPrivateChannel = isPrivate; }
 void Channel::setPasswordProtected(bool passwordProtected) { this->isPasswordProtected = passwordProtected; }
 void Channel::setMaxClients(size_t maxClients) { this->maxClients = maxClients; }
 void Channel::setIsInviteOnly(bool isInviteOnly) { this->isInviteOnly = isInviteOnly; }

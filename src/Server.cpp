@@ -421,10 +421,10 @@ void Server::notifyClientNicknameChangeToOthers(Client& client, const std::strin
 	debugResponse(ResponseMsg::nicknameChangeResponse(client, newNickname));
 }
 
-Channel* Server::addChannel(const std::string& name, bool isPrivate)
+Channel* Server::addChannel(const std::string& name)
 {
 	if (getChannelByName(name)==NULL)
-		this->channels[name] = new Channel(*this, name, "", isPrivate);
+		this->channels[name] = new Channel(*this, name, "");
 	return this->channels[name];
 }
 

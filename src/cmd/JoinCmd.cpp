@@ -50,7 +50,7 @@ void JoinCmd::run(Client &requestedFrom, const std::vector<std::string> &params)
 	// Controlla se il canale esiste già; se no, crealo
 	if (channel == NULL)
 	{
-		channel = server.addChannel(channelName, false);
+		channel = server.addChannel(channelName);
 		channel->setPasswordProtected(isPasswordProvided);
 		channel->setPassword(possiblePassword);
 	}

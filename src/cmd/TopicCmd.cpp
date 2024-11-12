@@ -15,16 +15,10 @@ void TopicCmd::run(Client& requestedFrom, const std::vector<std::string>& params
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "Invalid number of arguments. Usage: /TOPIC <channel> [topic]"));
 		return;
 	}
-
-	//verificare il caso in cui e' un canale privato
 	const std::string& channelName = params[0];
 	Channel * channel = server.getChannelByName(channelName);
 	if (channel == NULL) {
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channelName));
-		return;
-    }
-	if (channel->getIsPrivateChannel() && !(channel->isClientInChannel(&requestedFrom))) {
-        requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTONCHANNEL, requestedFrom.getNickname(), channel->getName()));
 		return;
     }
 	if (params.size() == 1){

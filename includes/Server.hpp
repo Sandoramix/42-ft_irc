@@ -81,7 +81,7 @@ public:
 
 	void notifyClientNicknameChangeToOthers(Client& client, const std::string& newNickname);
 
-	Channel* addChannel(const std::string &name, bool isPrivate);
+	Channel* addChannel(const std::string &name);
 
 	bool sendMessageToChannel(Channel* channel, const std::vector<SocketFd>& excludeClients, const std::string& message) const;
 

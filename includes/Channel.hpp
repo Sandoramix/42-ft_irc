@@ -14,7 +14,6 @@ public:
 // Assignable from constructor
 private:
 	const Server* server;
-	bool isPrivateChannel;
 	std::string name;
 	std::string topic;
 	/// Maximum number of clients allowed in the channel (0 = unlimited)
@@ -43,7 +42,7 @@ private:
 
 
 public:
-	Channel(const Server& server, const std::string& name, const std::string& topic, bool isPrivate);
+	Channel(const Server& server, const std::string& name, const std::string& topic);
 	~Channel();
 
 public:
@@ -64,7 +63,6 @@ public:
 
 // GETTERS/SETTERS
 public:
-	bool getIsPrivateChannel() const;
 	const std::string& getName() const;
 	const std::string& getTopic() const;
 	const std::string& getPassword() const;
@@ -75,7 +73,6 @@ public:
 	std::string getClientsNicknames() const;
 	bool isPasswordValid(const std::string &passw) const;
 
-	void setIsPrivateChannel(bool isPrivate);
 	void setName(const std::string& name);
 	void setTopic(const std::string& topic);
 	void setPassword(const std::string& password);
