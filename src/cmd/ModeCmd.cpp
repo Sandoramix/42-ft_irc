@@ -122,16 +122,16 @@ void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_KEYSET, requestedFrom.getNickname(), channelName));
 				return;
 			}
-			lastUsedParam++;
-			if (lastUsedParam>=mode.size()) {
-				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
-				return;
-			}
 			if (!modeSwitch) {
 				channel->setPasswordProtected(false);
 				channel->setPassword("");
 			}
 			else {
+			lastUsedParam++;
+				if (lastUsedParam>=params.size()) {
+					requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+					return;
+				}
 				std::string password = params[lastUsedParam];
 				if (password.empty()) {
 					requestedFrom
@@ -145,7 +145,7 @@ void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 		}
 		case MODE_OPERATOR: {
 			lastUsedParam++;
-			if (lastUsedParam>=mode.size()) {
+			if (lastUsedParam>=params.size()) {
 				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
 				return;
 			}
@@ -170,7 +170,7 @@ void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 		case MODE_LIMIT: {
 			if (modeSwitch) {
 				lastUsedParam++;
-				if (lastUsedParam>=mode.size()) {
+				if (lastUsedParam>=params.size()) {
 					requestedFrom
 							.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
 					return;
@@ -178,7 +178,7 @@ void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 				std::string limitStr = params[lastUsedParam];
 				char* end;
 				long limit = strtol(limitStr.c_str(), &end, 10);
-				if (end==limitStr.c_str() || *end!='\0' || limit<0) {
+				if (end==limitStr.c_str() || *end!='\0' || limit<0 || limit < (long)channel->getClientsSize()) {
 					requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), channelName, "Invalid limit"));
 					return;
 				}

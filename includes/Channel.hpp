@@ -71,6 +71,7 @@ public:
 	const std::string& getPassword() const;
 	bool getPasswordProtected() const;
 	size_t getMaxClients() const;
+	size_t getClientsSize() const;
 	bool getIsInviteOnly() const;
 	bool getIsTopicChangeOnlyForOperators() const;
 	std::string getClientsNicknames() const;

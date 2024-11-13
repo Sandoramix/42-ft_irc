@@ -58,11 +58,20 @@ void JoinCmd::run(Client &requestedFrom, const std::vector<std::string> &params)
 	{
 		if (channel->getPasswordProtected() && !channel->isPasswordValid(possiblePassword))
 		{
-			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_BADCHANNELKEY, requestedFrom.getNickname(), channel->getName(), "Cannot join channel"));
-			// TODO send error msg
+			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_BADCHANNELKEY, requestedFrom.getNickname(), channel->getName()));
+			return;
+		}
+		if (channel->getIsInviteOnly() && !channel->isClientInvited(&requestedFrom)){
+			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_INVITEONLYCHAN, requestedFrom.getNickname(), channel->getName()));
+			return;
+		}
+		if (channel->getMaxClients() != 0 && channel->getMaxClients() == channel->getClientsSize()){
+			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANNELISFULL, requestedFrom.getNickname(), channel->getName()));
 			return;
 		}
 	}
+
+
 
 	// Aggiungi l'utente al canale
 	channel->addClient(&requestedFrom);

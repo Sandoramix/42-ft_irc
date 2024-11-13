@@ -29,7 +29,7 @@ void TopicCmd::run(Client& requestedFrom, const std::vector<std::string>& params
 			requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_TOPIC, requestedFrom.getNickname(), channel->getName(), topic));
 	}
 	if (params.size() == 2){
-		if (channel->isClientOperator(&requestedFrom)){
+		if (channel->isClientOperator(&requestedFrom) || !channel->getIsTopicChangeOnlyForOperators()){
 			channel->setTopic(params[1]);
 		}
 		else {

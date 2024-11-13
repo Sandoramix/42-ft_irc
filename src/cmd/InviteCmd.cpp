@@ -42,4 +42,6 @@ void InviteCmd::run(Client& requestedFrom, const std::vector<std::string>& param
     // Invia messaggio di invito all'utente invitato
     std::string inviteMsg = ":" + requestedFrom.getNickname() + " INVITE " + nickname + " :" + channelName + "\r\n";
     send(server.findClientByNickname(nickname)->getSocketFd(), inviteMsg.c_str(), inviteMsg.size(), 0);
+
+    channel->inviteClient(user);
 }

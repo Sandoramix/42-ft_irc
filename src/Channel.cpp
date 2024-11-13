@@ -159,6 +159,7 @@ const std::string& Channel::getTopic() const { return this->topic; }
 const std::string& Channel::getPassword() const { return this->password; }
 bool Channel::getPasswordProtected() const { return this->isPasswordProtected; }
 size_t Channel::getMaxClients() const { return this->maxClients; }
+size_t Channel::getClientsSize() const { return this->clients.size(); }
 bool Channel::getIsInviteOnly() const { return this->isInviteOnly; }
 bool Channel::getIsTopicChangeOnlyForOperators() const { return this->isTopicChangePrivilege; }
 std::string Channel::getClientsNicknames() const
