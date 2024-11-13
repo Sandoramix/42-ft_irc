@@ -43,17 +43,15 @@ void PrivMsgCmd::run(Client& requestedFrom, const std::vector<std::string>& para
 		return;
 	}
 	// IS CLIENT
-	else {
-		Client* targetClient = server.findClientByNickname(targetClientOrChannel);
-		if (!targetClient) {
-			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHNICK, requestedFrom.getNickname(), targetClientOrChannel));
-			return;
-		}
-		if (!targetClient->isFullyRegistered()) {
-			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname(), targetClientOrChannel, "Client is not fully registered yet"));
-			return;
-		}
-		targetClient->sendMessage(ResponseMsg::privMsgResponse(requestedFrom.getNickname(), targetClientOrChannel, messageToSend));
-		debugResponse(ResponseMsg::privMsgResponse(requestedFrom.getNickname(), targetClientOrChannel, messageToSend));
+	Client* targetClient = server.findClientByNickname(targetClientOrChannel, true);
+	if (!targetClient) {
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHNICK, requestedFrom.getNickname(), targetClientOrChannel));
+		return;
 	}
+	if (!targetClient->isFullyRegistered()) {
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname(), targetClientOrChannel, "Client is not fully registered yet"));
+		return;
+	}
+	targetClient->sendMessage(ResponseMsg::privMsgResponse(requestedFrom.getNickname(), targetClientOrChannel, messageToSend));
+	debugResponse(ResponseMsg::privMsgResponse(requestedFrom.getNickname(), targetClientOrChannel, messageToSend));
 }

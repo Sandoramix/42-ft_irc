@@ -23,7 +23,7 @@ void InviteCmd::run(Client& requestedFrom, const std::vector<std::string>& param
     }
 
     std::string nickname = params[0];
-    Client * user = server.findClientByNickname(nickname);
+    Client * user = server.findClientByNickname(nickname, true);
     if (user == NULL) {
         requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHNICK, requestedFrom.getNickname(), nickname));
 		return;
@@ -41,5 +41,5 @@ void InviteCmd::run(Client& requestedFrom, const std::vector<std::string>& param
 
     // Invia messaggio di invito all'utente invitato
     std::string inviteMsg = ":" + requestedFrom.getNickname() + " INVITE " + nickname + " :" + channelName + "\r\n";
-    send(server.findClientByNickname(nickname)->getSocketFd(), inviteMsg.c_str(), inviteMsg.size(), 0);
+    send(server.findClientByNickname(nickname, true)->getSocketFd(), inviteMsg.c_str(), inviteMsg.size(), 0);
 }

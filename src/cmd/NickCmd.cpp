@@ -37,7 +37,7 @@ void NickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 		}
 	}
 
-	Client* foundClient = this->server.findClientByNickname(newNickname);
+	Client* foundClient = this->server.findClientByNickname(newNickname, true);
 	if (foundClient && foundClient->getSocketFd()!=requestedFrom.getSocketFd()) {
 		debugError("Client[" << requestedFrom.getSocketFd() << "] tried to change nickname to already used nickname");
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NICKNAMEINUSE, requestedFrom.getNickname(), ""));

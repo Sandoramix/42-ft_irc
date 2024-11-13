@@ -123,6 +123,10 @@ bool Channel::removeClient(Client* client)
 	this->clients.erase(client->getSocketFd());
 	
 	removeOperator(client);
+	const std::vector<SocketFd>::iterator& it = std::find(this->invitedClients.begin(), this->invitedClients.end(), client->getSocketFd());
+	if (it!=this->invitedClients.end()) {
+		this->invitedClients.erase(it);
+	}
 
 
 	return true;

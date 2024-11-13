@@ -12,10 +12,12 @@
  */
 enum ResponseCode {
 	RPL_WELCOME = 1,
+	RPL_ENDOFWHO = 315,
 	RPL_NOTOPIC = 331,
 	RPL_TOPIC = 332,
 	RPL_CHANNELMODEIS = 324,
 
+	RPL_WHOREPLY = 352,
 	RPL_NAMREPLY = 353,
 	RPL_ENDOFNAMES = 366,
 	RPL_BANLIST = 367,
@@ -46,6 +48,8 @@ enum ResponseCode {
 class ResponseMsg {
 private:
 	static std::string hostname;
+public:
+	static const std::string& getHostname();
 
 	ResponseMsg();
 	~ResponseMsg();
@@ -65,6 +69,7 @@ public:
 	static std::string pongResponse(const std::string& token);
 	static std::string privMsgResponse(const std::string& sender, const std::string& target, const std::string& message);
 	static std::string userKickedResponse(const std::string& kickerNickname, const std::string& kickedNickname, const std::string& channelName, const std::string& reason);
+	static std::string whoResponse(Client* client, const Channel *channel);
 };
 
 #endif //FT_IRC_RESPONSEMSG_HPP
