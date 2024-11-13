@@ -233,7 +233,7 @@ bool Server::tryToRunClientCommand(Client* client)
 			commandArgs = commandArgs.substr(firstSpace+1);
 		}
 		if (this->commands.find(commandName)==this->commands.end()) {
-			client->sendMessage(ResponseMsg::genericResponse(ERR_UNKNOWNCOMMAND, client->getNickname(), ""));
+			client->sendMessage(ResponseMsg::genericResponse(ERR_UNKNOWNCOMMAND, client->getNickname(), "", commandName));
 
 			debugError("Client[" << client->getSocketFd() << "] tried to run unknown command [" << commandName << "] with arguments \"" << commandArgs << "\"");
 

@@ -14,10 +14,16 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 		return "Welcome to the 42Firenze IRC Server@"+hostname;
 	case RPL_NOTOPIC:
 		return "No topic is set";
+	case RPL_CHANNELMODEIS:
+		return "Channel modes are:";
 	case RPL_NAMREPLY:
 		return "<User list>";
 	case RPL_ENDOFNAMES:
 		return "End of /NAMES list.";
+	case RPL_BANLIST:
+		return "<Ban list>";
+	case RPL_ENDOFBANLIST:
+		return "End of /BANLIST";
 	case ERR_NOSUCHNICK:
 		return "No such nick";
 	case ERR_NOSUCHCHANNEL:
@@ -42,8 +48,16 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 		return "You may not reregister";
 	case ERR_PASSWDMISMATCH:
 		return "Password incorrect";
+	case ERR_KEYSET:
+		return "Channel key is already set";
+	case ERR_CHANNELISFULL:
+		return "Channel is full";
+	case ERR_UNKNOWNMODE:
+		return "Unknown mode";
+	case ERR_INVITEONLYCHAN:
+		return "Cannot join channel (+i)";
 	case ERR_BADCHANNELKEY:
-		return "Cannot join channel";
+		return "Cannot join channel (+k)";
 	case ERR_USERNOTINCHANNEL:
 		return "User is not in channel";
 	case ERR_CHANOPRIVSNEEDED:
@@ -93,6 +107,19 @@ std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& t
 	debugResponse(ss.str());
 	return ss.str();
 }
+std::string ResponseMsg::genericCommandResponse(const std::string& commandName, const std::vector<std::string>& params)
+{
+	std::string host = isHostnameSet() ? hostname : "*";
+
+	std::stringstream ss;
+	ss << ":" << host << " " << commandName << (params.empty() ? "" : " ");
+	for (size_t i = 0; i<params.size(); i++) {
+		if (i>0) { ss << " "; }
+		ss << params[i];
+	}
+	return ss.str();
+}
+
 std::string ResponseMsg::nicknameChangeResponse(const Client& client, const std::string& newNickname)
 {
 	std::stringstream ss;
@@ -103,7 +130,7 @@ std::string ResponseMsg::nicknameChangeResponse(const Client& client, const std:
 std::string ResponseMsg::joinConfirmResponse(const Client& client, const std::string& channelName)
 {
 	std::stringstream ss;
-	ss << ":" << client.getNickname() << "!" << client.getUsername() << "@" << client.getHostname() << " JOIN :" << channelName;
+	ss << ":" << client.getUserInfo() << " JOIN :" << channelName;
 	debugResponse(ss.str());
 	return ss.str();
 }
@@ -125,7 +152,7 @@ std::string ResponseMsg::userKickedResponse(const std::string& kickerNickname, c
 {
 	std::stringstream ss;
 
-	ss << ":" << kickerNickname << " KICK " << channelName << " " << kickedNickname << (reason.empty() ? "" : " :" + reason);
+	ss << ":" << kickerNickname << " KICK " << channelName << " " << kickedNickname << (reason.empty() ? "" : " :"+reason);
 	debugResponse(ss.str());
 	return ss.str();
 }

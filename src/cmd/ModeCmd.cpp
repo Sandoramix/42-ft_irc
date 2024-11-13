@@ -9,59 +9,195 @@ ModeCmd::~ModeCmd()
 {
 }
 
+bool ModeCmd::executeViewOnlyMode(Client& requestedFrom, Channel* channel, const std::vector<std::string>& params)
+{
+	const std::string& mode = params[1];
+	if (mode=="+b") {
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_ENDOFBANLIST, requestedFrom.getNickname(), channel->getName()));
+		return true;
+	}
+
+	return false;
+}
+
+void ModeCmd::showChannelModes(Client& requestedFrom, Channel* channel)
+{
+	std::stringstream ss;
+	std::vector<std::string> modeValues;
+	int enabledModes = 0;
+	ss << "+";
+	if (channel->getIsInviteOnly()){
+		ss << "i";
+		enabledModes++;
+	}
+	if (channel->getIsTopicChangeOnlyForOperators()){
+		ss << "t";
+		enabledModes++;
+	}
+	if (channel->getPasswordProtected()){
+		ss << "k";
+		modeValues.push_back(channel->getPassword());
+		enabledModes++;
+	}
+	if (channel->getMaxClients()>0){
+		ss << "l";
+		std::stringstream limit;
+		limit << channel->getMaxClients();
+		modeValues.push_back(limit.str());
+		enabledModes++;
+	}
+	if (enabledModes == 0){
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_CHANNELMODEIS, requestedFrom.getNickname(), channel->getName(), ""));
+		return ;
+	}
+	ss << " ";
+	for (size_t i = 0; i<modeValues.size(); i++) {
+		if (i>0) { ss << " "; }
+		ss << modeValues[i];
+	}
+	requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_CHANNELMODEIS, requestedFrom.getNickname(), channel->getName(), ss.str()));
+}
+
 void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
-	if (params.empty())
-	{
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), ""));
+	if (params.empty()) {
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
 		return;
 	}
-	bool isTargetAChannel = IRCUtils::isValidChannelName(params[0]);
-	if (!isTargetAChannel){
+
+	const std::string& channelName = params[0];
+	bool isTargetAChannel = IRCUtils::isValidChannelName(channelName);
+	if (!isTargetAChannel) {
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), params[0]));
 		return;
 	}
-	Channel * channel = server.getChannelByName(params[0]);
-	for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it)
-	{
-		if (*it == "+i")
-			channel->setIsInviteOnly(true);
-		else if (*it == "-i")
-			channel->setIsInviteOnly(false);
-		else if (*it == "+t")
-			channel->setIsTopicChangePrivilege(true);
-		else if (*it == "-t")
-			channel->setIsTopicChangePrivilege(false);
-		else if (*it == "+k")
-			channel->setPasswordProtected(true);
-		else if (*it == "-k")
-			channel->setPasswordProtected(false);
-		else if (*it == "+o"){
-			if (++it != params.end() && channel->getClientsNicknames().find(*it))
-				channel->makeOperator(server.findClientByNickname(*it));
-			else
-				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHNICK, requestedFrom.getNickname(), channel->getName()));
-		}
-		else if (*it == "-o")
-			if (++it != params.end() && channel->getClientsNicknames().find(*it))
-				channel->removeOperator(server.findClientByNickname(*it));
-			else
-				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHNICK, requestedFrom.getNickname(), channel->getName()));
-		else if (*it == "+l"){
-			std::string tmp = *++it;
-			char * end;
-			long limit = strtol(end);
-			if (it != params.end() && (*it))
-				channel->makeOperator(server.findClientByNickname(*it));
-			else
-				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHNICK, requestedFrom.getNickname(), channel->getName()));
-		}
-		else if (*it == "-l")
-			if (++it != params.end() && channel->getClientsNicknames().find(*it))
-				channel->removeOperator(server.findClientByNickname(*it));
-			else
-				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHNICK, requestedFrom.getNickname(), channel->getName()));
+	Channel* channel = server.getChannelByName(channelName);
+	if (!channel) {
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channelName));
+		return;
 	}
-	(void)params;
-	(void)requestedFrom;
+	if (!channel->isClientInChannel(&requestedFrom)) {
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTONCHANNEL, requestedFrom.getNickname(), channelName));
+		return;
+	}
+
+	// Show channel modes and exit
+	if (params.size()==1) {
+		this->showChannelModes(requestedFrom, channel);
+		return;
+	}
+
+	// Special cases which can be executed even if the client is not a channel operator (not fully implemented).
+	if (this->executeViewOnlyMode(requestedFrom, channel, params)) {
+		return;
+	}
+
+	// Every mode below can be executed only by channel operators
+	if (!channel->isClientOperator(&requestedFrom)) {
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), channelName));
+		return;
+	}
+
+	const std::string& mode = params[1];
+	/// TRUE=`+`; FALSE=`-`
+	if (mode.size()<=1) {
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+		return;
+	}
+
+	bool modeSwitch = mode[0]=='+';
+	size_t lastUsedParam = 1;
+	for (size_t i = 1; i<mode.size(); i++) {
+		switch (mode[i]) {
+		case MODE_INVITEONLY: {
+			channel->setIsInviteOnly(modeSwitch);
+			break;
+		}
+		case MODE_TOPICCHANGE: {
+			channel->setIsTopicChangeOnlyForOperators(modeSwitch);
+			break;
+		}
+		case MODE_PASSWORD: {
+			if (modeSwitch && channel->getPasswordProtected()) {
+				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_KEYSET, requestedFrom.getNickname(), channelName));
+				return;
+			}
+			lastUsedParam++;
+			if (lastUsedParam>=mode.size()) {
+				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+				return;
+			}
+			if (!modeSwitch) {
+				channel->setPasswordProtected(false);
+				channel->setPassword("");
+			}
+			else {
+				std::string password = params[lastUsedParam];
+				if (password.empty()) {
+					requestedFrom
+							.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+					return;
+				}
+				channel->setPasswordProtected(true);
+				channel->setPassword(password);
+			}
+			break;
+		}
+		case MODE_OPERATOR: {
+			lastUsedParam++;
+			if (lastUsedParam>=mode.size()) {
+				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+				return;
+			}
+			std::string nickname = params[lastUsedParam];
+			if (nickname.empty()) {
+				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+				return;
+			}
+			Client* client = channel->findClientByNickname(nickname);
+			if (!client) {
+				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_USERNOTINCHANNEL, requestedFrom.getNickname(), channelName));
+				return;
+			}
+			if (modeSwitch) {
+				channel->makeOperator(client);
+			}
+			else {
+				channel->removeOperator(client);
+			}
+			break;
+		}
+		case MODE_LIMIT: {
+			if (modeSwitch) {
+				lastUsedParam++;
+				if (lastUsedParam>=mode.size()) {
+					requestedFrom
+							.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+					return;
+				}
+				std::string limitStr = params[lastUsedParam];
+				char* end;
+				long limit = strtol(limitStr.c_str(), &end, 10);
+				if (end==limitStr.c_str() || *end!='\0' || limit<0) {
+					requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), channelName, "Invalid limit"));
+					return;
+				}
+				channel->setMaxClients(limit);
+			}
+			else {
+				channel->setMaxClients(0);
+			}
+			break;
+		}
+		default: {
+			std::stringstream ss;
+			ss << "(" << mode[i] << ")";
+			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_UNKNOWNMODE, requestedFrom.getNickname(), channelName, ss.str()));
+			return;
+		}
+		}
+	}
+	this->server.sendMessageToChannel(channel, std::vector<SocketFd>(), ResponseMsg::genericCommandResponse(this->commandName, params));
 }
+
+

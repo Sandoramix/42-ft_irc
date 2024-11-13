@@ -47,10 +47,13 @@ public:
 // CLIENT RELATED METHODS
 
 	ClientsVector getAllClients() const;
+	Client* findClientByNickname(const std::string& nickname);
 
 	bool isClientOperator(Client* client) const;
 	bool isClientInChannel(Client* client) const;
 	bool isClientInvited(Client* client) const;
+
+
 
 	bool inviteClient(Client* client);
 
@@ -69,7 +72,7 @@ public:
 	bool getPasswordProtected() const;
 	size_t getMaxClients() const;
 	bool getIsInviteOnly() const;
-	bool getIsTopicChangePrivilege() const;
+	bool getIsTopicChangeOnlyForOperators() const;
 	std::string getClientsNicknames() const;
 	bool isPasswordValid(const std::string &passw) const;
 
@@ -79,7 +82,7 @@ public:
 	void setPasswordProtected(bool passwordProtected);
 	void setMaxClients(size_t maxClients);
 	void setIsInviteOnly(bool isInviteOnly);
-	void setIsTopicChangePrivilege(bool isTopicChangePrivilege);
+	void setIsTopicChangeOnlyForOperators(bool isTopicChangePrivilege);
 };
 
 #endif //FT_IRC_CHANNEL_HPP

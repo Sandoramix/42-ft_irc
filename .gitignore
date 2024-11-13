@@ -31,5 +31,7 @@ makefile.srcs
 *.exe
 *.out
 *.app
+bircd
+bircd.tar*
 
 ircserv

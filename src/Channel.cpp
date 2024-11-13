@@ -20,6 +20,7 @@ bool Channel::isClientInChannel(Client* client) const
 	return this->clients.find(client->getSocketFd())!=this->clients.end();
 }
 
+
 bool Channel::isClientOperator(Client* client) const
 {
 	if (!this->isClientInChannel(client)) {
@@ -48,6 +49,14 @@ ClientsVector Channel::getAllClients() const
 		result.push_back(it->second);
 	}
 	return result;
+}
+Client* Channel::findClientByNickname(const std::string& nickname)
+{
+	for (ClientsMap::iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
+		if (it->second->getNickname()==nickname)
+			return it->second;
+	}
+	return NULL;
 }
 
 bool Channel::removeAllClients()
@@ -151,7 +160,7 @@ const std::string& Channel::getPassword() const { return this->password; }
 bool Channel::getPasswordProtected() const { return this->isPasswordProtected; }
 size_t Channel::getMaxClients() const { return this->maxClients; }
 bool Channel::getIsInviteOnly() const { return this->isInviteOnly; }
-bool Channel::getIsTopicChangePrivilege() const { return this->isTopicChangePrivilege; }
+bool Channel::getIsTopicChangeOnlyForOperators() const { return this->isTopicChangePrivilege; }
 std::string Channel::getClientsNicknames() const
 {
 	std::string clientsNicknames = "";
@@ -183,4 +192,4 @@ void Channel::setPassword(const std::string& password) { this->password = passwo
 void Channel::setPasswordProtected(bool passwordProtected) { this->isPasswordProtected = passwordProtected; }
 void Channel::setMaxClients(size_t maxClients) { this->maxClients = maxClients; }
 void Channel::setIsInviteOnly(bool isInviteOnly) { this->isInviteOnly = isInviteOnly; }
-void Channel::setIsTopicChangePrivilege(bool isTopicChangePrivilege) { this->isTopicChangePrivilege = isTopicChangePrivilege; }
+void Channel::setIsTopicChangeOnlyForOperators(bool isTopicChangePrivilege) { this->isTopicChangePrivilege = isTopicChangePrivilege; }

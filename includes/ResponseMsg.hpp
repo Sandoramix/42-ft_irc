@@ -14,8 +14,13 @@ enum ResponseCode {
 	RPL_WELCOME = 1,
 	RPL_NOTOPIC = 331,
 	RPL_TOPIC = 332,
+	RPL_CHANNELMODEIS = 324,
+
 	RPL_NAMREPLY = 353,
 	RPL_ENDOFNAMES = 366,
+	RPL_BANLIST = 367,
+	RPL_ENDOFBANLIST = 368,
+
 	// Error replies
 	ERR_NOSUCHNICK = 401,
 	ERR_NOSUCHCHANNEL = 403,
@@ -29,11 +34,14 @@ enum ResponseCode {
 	ERR_NEEDMOREPARAMS = 461,
 	ERR_ALREADYREGISTRED = 462,
 	ERR_PASSWDMISMATCH = 464,
+	ERR_KEYSET = 467,
+	ERR_CHANNELISFULL = 471,
+	ERR_UNKNOWNMODE = 472,
+	ERR_INVITEONLYCHAN = 473,
 	ERR_BADCHANNELKEY = 475,
 	ERR_USERNOTINCHANNEL = 441,
 	ERR_CHANOPRIVSNEEDED = 482,
 };
-
 
 class ResponseMsg {
 private:
@@ -48,12 +56,14 @@ public:
 	static void setHostname(const std::string& newHostname);
 
 	static std::string genericResponse(ResponseCode code, const std::string& target, const std::string& channelName);
-	static std::string genericResponse(ResponseCode code, const std::string& target, const std::string &channelName, const std::string& customMessage);
+	static std::string genericResponse(ResponseCode code, const std::string& target, const std::string& channelName, const std::string& customMessage);
+
+	static std::string genericCommandResponse(const std::string& commandName, const std::vector<std::string>& params);
 
 	static std::string nicknameChangeResponse(const Client& client, const std::string& newNickname);
-	static std::string joinConfirmResponse(const Client &client, const std::string &channelName);
+	static std::string joinConfirmResponse(const Client& client, const std::string& channelName);
 	static std::string pongResponse(const std::string& token);
-	static std::string privMsgResponse(const std::string& sender, const std::string &target, const std::string& message);
+	static std::string privMsgResponse(const std::string& sender, const std::string& target, const std::string& message);
 	static std::string userKickedResponse(const std::string& kickerNickname, const std::string& kickedNickname, const std::string& channelName, const std::string& reason);
 };
 
