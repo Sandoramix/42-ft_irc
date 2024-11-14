@@ -1,13 +1,9 @@
 #include "cmd/ModeCmd.hpp"
 
 ModeCmd::ModeCmd(Server& server)
-		:CmdInterface("MODE", server, true)
-{
-}
+		:CmdInterface("MODE", server, true) { }
 
-ModeCmd::~ModeCmd()
-{
-}
+ModeCmd::~ModeCmd() { }
 
 bool ModeCmd::executeViewOnlyMode(Client& requestedFrom, Channel* channel, const std::vector<std::string>& params)
 {
@@ -26,29 +22,29 @@ void ModeCmd::showChannelModes(Client& requestedFrom, Channel* channel)
 	std::vector<std::string> modeValues;
 	int enabledModes = 0;
 	ss << "+";
-	if (channel->getIsInviteOnly()){
+	if (channel->getIsInviteOnly()) {
 		ss << "i";
 		enabledModes++;
 	}
-	if (channel->getIsTopicChangeOnlyForOperators()){
+	if (channel->getIsTopicChangeOnlyForOperators()) {
 		ss << "t";
 		enabledModes++;
 	}
-	if (channel->getPasswordProtected()){
+	if (channel->getPasswordProtected()) {
 		ss << "k";
 		modeValues.push_back(channel->getPassword());
 		enabledModes++;
 	}
-	if (channel->getMaxClients()>0){
+	if (channel->getMaxClients()>0) {
 		ss << "l";
 		std::stringstream limit;
 		limit << channel->getMaxClients();
 		modeValues.push_back(limit.str());
 		enabledModes++;
 	}
-	if (enabledModes == 0){
+	if (enabledModes==0) {
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_CHANNELMODEIS, requestedFrom.getNickname(), channel->getName(), ""));
-		return ;
+		return;
 	}
 	ss << " ";
 	for (size_t i = 0; i<modeValues.size(); i++) {
@@ -127,9 +123,10 @@ void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 				channel->setPassword("");
 			}
 			else {
-			lastUsedParam++;
+				lastUsedParam++;
 				if (lastUsedParam>=params.size()) {
-					requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+					requestedFrom
+							.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
 					return;
 				}
 				std::string password = params[lastUsedParam];
@@ -178,7 +175,7 @@ void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 				std::string limitStr = params[lastUsedParam];
 				char* end;
 				long limit = strtol(limitStr.c_str(), &end, 10);
-				if (end==limitStr.c_str() || *end!='\0' || limit<0 || limit < (long)channel->getClientsSize()) {
+				if (end==limitStr.c_str() || *end!='\0' || limit<0 || limit<(long)channel->getClientsSize()) {
 					requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), channelName, "Invalid limit"));
 					return;
 				}

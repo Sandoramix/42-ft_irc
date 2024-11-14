@@ -31,10 +31,10 @@ std::vector<std::string> CmdInterface::parseArgs(const std::string& argsWithoutC
 	}
 	if (colonPos!=std::string::npos) {
 		std::string preColonArg = copy.substr(0, colonPos);
-		if (!preColonArg.empty()){
+		if (!preColonArg.empty()) {
 			args.push_back(preColonArg);
 		}
-		copy = copy.substr(colonPos + 1);
+		copy = copy.substr(colonPos+1);
 		args.push_back(copy);
 		copy = "";
 	}
@@ -43,6 +43,7 @@ std::vector<std::string> CmdInterface::parseArgs(const std::string& argsWithoutC
 	}
 	return args;
 }
+
 bool CmdInterface::checkForAuthOrSendErrorAndThrow(Client& requestedFrom) const
 {
 	if (this->authenticationRequired) {
@@ -53,6 +54,7 @@ bool CmdInterface::checkForAuthOrSendErrorAndThrow(Client& requestedFrom) const
 	}
 	return (true);
 }
+
 
 // EXCEPTIONS -----------------------------------------------------------------
 

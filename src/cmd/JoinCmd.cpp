@@ -1,20 +1,15 @@
 #include "cmd/JoinCmd.hpp"
 
-JoinCmd::JoinCmd(Server &server)
-	: CmdInterface("JOIN", server, true)
-{
-}
+JoinCmd::JoinCmd(Server& server)
+		:CmdInterface("JOIN", server, true) { }
 
-JoinCmd::~JoinCmd()
-{
-}
+JoinCmd::~JoinCmd() { }
 
-void JoinCmd::run(Client &requestedFrom, const std::vector<std::string> &params)
+void JoinCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
 	std::vector<std::string> copiedParams(params);
 
-	if (copiedParams.empty())
-	{
+	if (copiedParams.empty()) {
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Not enough parameters. Usage: /JOIN <channel> [password]"));
 		return;
 	}
@@ -22,8 +17,7 @@ void JoinCmd::run(Client &requestedFrom, const std::vector<std::string> &params)
 	// check for atleast 1 arg
 
 	std::string channelName = copiedParams[0];
-	if (!IRCUtils::isValidChannelName(channelName))
-	{
+	if (!IRCUtils::isValidChannelName(channelName)) {
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channelName, "Invalid channel name"));
 		return;
 	}
@@ -31,47 +25,39 @@ void JoinCmd::run(Client &requestedFrom, const std::vector<std::string> &params)
 	std::string possiblePassword = "";
 	bool isPasswordProvided = false;
 
-	if (copiedParams.size() > 1)
-	{
-		possiblePassword = copiedParams[copiedParams.size() - 1];
-		if (!IRCUtils::isValidChannelName(possiblePassword))
-		{
+	if (copiedParams.size()>1) {
+		possiblePassword = copiedParams[copiedParams.size()-1];
+		if (!IRCUtils::isValidChannelName(possiblePassword)) {
 			isPasswordProvided = true;
 			copiedParams.pop_back();
 		}
 	}
 	// TODO: se vogliamo gestire join di piu' canali, modificare questo if.
-	if (copiedParams.size() != 1)
-	{
+	if (copiedParams.size()!=1) {
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of args"));
 		return;
 	}
-	Channel *channel = server.getChannelByName(channelName);
+	Channel* channel = server.getChannelByName(channelName);
 	// Controlla se il canale esiste già; se no, crealo
-	if (channel == NULL)
-	{
+	if (channel==NULL) {
 		channel = server.addChannel(channelName);
 		channel->setPasswordProtected(isPasswordProvided);
 		channel->setPassword(possiblePassword);
 	}
-	else
-	{
-		if (channel->getPasswordProtected() && !channel->isPasswordValid(possiblePassword))
-		{
+	else {
+		if (channel->getPasswordProtected() && !channel->isPasswordValid(possiblePassword)) {
 			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_BADCHANNELKEY, requestedFrom.getNickname(), channel->getName()));
 			return;
 		}
-		if (channel->getIsInviteOnly() && !channel->isClientInvited(&requestedFrom)){
+		if (channel->getIsInviteOnly() && !channel->isClientInvited(&requestedFrom)) {
 			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_INVITEONLYCHAN, requestedFrom.getNickname(), channel->getName()));
 			return;
 		}
-		if (channel->getMaxClients() != 0 && channel->getMaxClients() == channel->getClientsSize()){
+		if (channel->getMaxClients()!=0 && channel->getMaxClients()==channel->getClientsSize()) {
 			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANNELISFULL, requestedFrom.getNickname(), channel->getName()));
 			return;
 		}
 	}
-
-
 
 	// Aggiungi l'utente al canale
 	channel->addClient(&requestedFrom);
@@ -81,7 +67,7 @@ void JoinCmd::run(Client &requestedFrom, const std::vector<std::string> &params)
 
 	// Invio lista utenti
 	std::string userList = channel->getClientsNicknames();
-	requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_NAMREPLY, requestedFrom.getNickname(), "= " + channelName, userList));
+	requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_NAMREPLY, requestedFrom.getNickname(), "= "+channelName, userList));
 
 	// Fine della lista
 	requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_ENDOFNAMES, requestedFrom.getNickname(), channelName, "End of /NAMES list."));

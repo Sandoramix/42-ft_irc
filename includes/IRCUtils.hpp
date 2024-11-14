@@ -1,20 +1,23 @@
 #ifndef FT_IRC_IRCUTILS_HPP
 #define FT_IRC_IRCUTILS_HPP
+
 # ifndef DEBUG
 #  define DEBUG false
 # endif
-#include <vector>
+
 #include <exception>
 #include <iostream>
 #include <string>
 #include <map>
 #include <csignal>
 #include <cstdlib>
-#include <poll.h>
 #include <algorithm>
 #include <iostream>
 #include <vector>
+#include <sstream>
+#include <stdexcept>
 
+#include <poll.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -26,7 +29,23 @@ typedef struct sockaddr_in SocketAddrIn;
 typedef struct pollfd PollFd;
 typedef std::vector<PollFd> AllPollFdsVector;
 
+class CmdInterface;
+class Channel;
+class Client;
+class Server;
 
+typedef std::map<SocketFd, Client*> ClientsMap;
+typedef std::vector<Client*> ClientsVector;
+
+typedef std::map<const std::string, CmdInterface*> ServerCommandsMap;
+typedef std::map<std::string, Channel*> ChannelsMap;
+
+namespace IRCUtils {
+	bool isValidChannelStartingCharacter(const std::string& channel);
+	bool isValidChannelName(const std::string& channel);
+};
+
+// DEBUG-RELATED MACROS -------------------------------------------------------
 # define RESET "\033[0m"
 # define RED "\033[31m"
 # define MAGENTA "\033[35m"
@@ -60,17 +79,11 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 {
 	os << "[";
 	for (size_t i = 0; i<v.size(); i++) {
-		if (i > 0) { os << ", "; }
+		if (i>0) { os << ", "; }
 		os << v[i];
 	}
 	return os << "]";
 }
-
-namespace IRCUtils
-{
-	bool isValidChannelStartingCharacter(const std::string& channel);
-	bool isValidChannelName(const std::string& channel);
-};
 
 
 #endif //FT_IRC_IRCUTILS_HPP

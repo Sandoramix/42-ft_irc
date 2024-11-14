@@ -1,12 +1,8 @@
 #ifndef IRCCMD_HPP
 #define IRCCMD_HPP
 
-#include <vector>
-#include <stdexcept>
-
-class CmdInterface;
-
 #include "IRCUtils.hpp"
+
 #include "Client.hpp"
 #include "Server.hpp"
 #include "ResponseMsg.hpp"
@@ -24,12 +20,11 @@ protected:
 
 public:
 	CmdInterface(const std::string& commandName, Server& server, bool authenticationRequired = true);
-
 	virtual ~CmdInterface();
 
 	virtual void run(Client& requestedFrom, const std::vector<std::string>& params);
 
-	/// Try to parse the command arguments from the client buffer. It is virtual so that some commands can override it.
+	/// Parse the command arguments from a string to vector of strings. It is virtual so that some commands can eventually override it.
 	virtual std::vector<std::string> parseArgs(const std::string& argsWithoutCommand);
 
 	/**

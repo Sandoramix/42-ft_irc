@@ -20,7 +20,6 @@ bool Channel::isClientInChannel(Client* client) const
 	return this->clients.find(client->getSocketFd())!=this->clients.end();
 }
 
-
 bool Channel::isClientOperator(Client* client) const
 {
 	if (!this->isClientInChannel(client)) {
@@ -39,7 +38,6 @@ bool Channel::isClientInvited(Client* client) const
 	if (!client) { return false; }
 	return std::find(this->invitedClients.begin(), this->invitedClients.end(), client->getSocketFd())!=this->invitedClients.end();
 }
-
 
 ClientsVector Channel::getAllClients() const
 {
@@ -93,16 +91,17 @@ bool Channel::addClient(Client* client)
 	return true;
 }
 
-bool Channel::removeOperator(Client* client){
+bool Channel::removeOperator(Client* client)
+{
 	if (!client) { return false; }
 
-	if (!this->isClientOperator(client)) { return false;}
-	
+	if (!this->isClientOperator(client)) { return false; }
+
 	this->operatorClients.erase(std::find(this->operatorClients.begin(), this->operatorClients.end(), client->getSocketFd()));
-	
+
 	if (this->operatorClients.empty() && !this->clients.empty()) {
 		debug("Client[" << client->getSocketFd() << "] left channel as last operator.");
-		Client *newOperator = this->clients.begin()->second;
+		Client* newOperator = this->clients.begin()->second;
 		debug("Promoting client[" << newOperator->getSocketFd() << "] to operator");
 		this->operatorClients.push_back(newOperator->getSocketFd());
 	}
@@ -110,7 +109,8 @@ bool Channel::removeOperator(Client* client){
 	return true;
 }
 
-bool Channel::makeOperator(Client* client){
+bool Channel::makeOperator(Client* client)
+{
 	if (!client) { return false; }
 	this->operatorClients.push_back(client->getSocketFd());
 	return true;
@@ -121,13 +121,12 @@ bool Channel::removeClient(Client* client)
 	if (!this->isClientInChannel(client)) { return false; }
 
 	this->clients.erase(client->getSocketFd());
-	
+
 	removeOperator(client);
 	const std::vector<SocketFd>::iterator& it = std::find(this->invitedClients.begin(), this->invitedClients.end(), client->getSocketFd());
 	if (it!=this->invitedClients.end()) {
 		this->invitedClients.erase(it);
 	}
-
 
 	return true;
 }
@@ -169,19 +168,17 @@ bool Channel::getIsTopicChangeOnlyForOperators() const { return this->isTopicCha
 std::string Channel::getClientsNicknames() const
 {
 	std::string clientsNicknames = "";
-	for (ClientsMap::const_iterator it = this->clients.begin(); it != this->clients.end(); ++it)
-	{
-		if (it != this->clients.begin())
+	for (ClientsMap::const_iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
+		if (it!=this->clients.begin())
 			clientsNicknames += " ";
 		clientsNicknames += it->second->getNickname();
 	}
 	return clientsNicknames;
 }
-bool Channel::isPasswordValid(const std::string &passw) const {
-	return this->password == passw;
+bool Channel::isPasswordValid(const std::string& passw) const
+{
+	return this->password==passw;
 }
-
-
 
 void Channel::setName(const std::string& name) { this->name = name; }
 void Channel::setTopic(const std::string& topic)

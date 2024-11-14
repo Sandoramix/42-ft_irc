@@ -3,23 +3,19 @@
 #include "ResponseMsg.hpp"
 
 KickCmd::KickCmd(Server& server)
-		:CmdInterface("KICK", server, true)
-{
-}
-
-//authentication required == true
-//if the command should look for a colon ':' == true 
-//is colon required == false
+		:CmdInterface("KICK", server, true) { }
 
 KickCmd::~KickCmd() { }
 
 
-//for /KICK
-//<channel> <user> [:reason]
-
+/**
+ * @brief Usage: KICK \<channel> \<user> [:reason]
+ * @param requestedFrom client that is trying to run the command
+ * @param params parameters of the command
+ */
 void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
-	// Check the required parameters: <channel> <user> <channelName>/<targetNickname> [reason]
+	// Check the required parameters: <channel> <user> [reason]
 	if (params.size()<2 || params.size()>3) {
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "KICK <channel> <user> [reason]"));
 		return;

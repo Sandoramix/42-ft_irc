@@ -3,7 +3,13 @@
 
 #include "Server.hpp"
 
-void handleSigInt(int sig) { if (sig==SIGINT) { std::cout << "Interrupt signal received. Exiting..." << std::endl; SERVER_RUNNING = false; }}
+void handleSigInt(int sig)
+{
+	if (sig==SIGINT) {
+		std::cout << "Interrupt signal received. Exiting..." << std::endl;
+		SERVER_RUNNING = false;
+	}
+}
 
 bool SERVER_RUNNING = false;
 

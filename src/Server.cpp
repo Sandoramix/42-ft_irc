@@ -42,46 +42,45 @@ Server::Server(const std::string& host, const std::string& port, const std::stri
 // DESTRUCTOR
 Server::~Server()
 {
-	for (ServerCommandsMap::iterator it = this->commands.begin(); it!=this->commands.end(); ++it) {
+	for (ServerCommandsMap::iterator it = this->commandsMap.begin(); it!=this->commandsMap.end(); ++it) {
 		delete it->second;
 	}
-	this->commands.clear();
+	this->commandsMap.clear();
 
-	for (ChannelsMap::iterator it = this->channels.begin(); it!=this->channels.end(); ++it) {
+	for (ChannelsMap::iterator it = this->channelsMap.begin(); it!=this->channelsMap.end(); ++it) {
 		delete it->second;
 	}
-	for (ClientsMap::iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
+	for (ClientsMap::iterator it = this->clientsMap.begin(); it!=this->clientsMap.end(); ++it) {
 		Client* client = it->second;
 		if (client) {
 			close(client->getSocketFd());
 			delete client;
 		}
 	}
-	this->clients.clear();
+	this->clientsMap.clear();
 }
 
 // PRIVATE METHODS ------------------------------------------------------------
 
 void Server::initCommands()
 {
-	commands["PASS"] = new PassCmd(*this);
-	commands["NICK"] = new NickCmd(*this);
-	commands["USER"] = new UserCmd(*this);
+	commandsMap["PASS"] = new PassCmd(*this);
+	commandsMap["NICK"] = new NickCmd(*this);
+	commandsMap["USER"] = new UserCmd(*this);
 
-	commands["INVITE"] = new InviteCmd(*this);
-	commands["JOIN"] = new JoinCmd(*this);
-	commands["KICK"] = new KickCmd(*this);
-	commands["MODE"] = new ModeCmd(*this);
-	commands["TOPIC"] = new TopicCmd(*this);
+	commandsMap["INVITE"] = new InviteCmd(*this);
+	commandsMap["JOIN"] = new JoinCmd(*this);
+	commandsMap["KICK"] = new KickCmd(*this);
+	commandsMap["MODE"] = new ModeCmd(*this);
+	commandsMap["TOPIC"] = new TopicCmd(*this);
 
-	commands["PRIVMSG"] = new PrivMsgCmd(*this);
+	commandsMap["PRIVMSG"] = new PrivMsgCmd(*this);
 
 	// EXTRA COMMANDS
-	commands["WHO"] = new WhoCmd(*this);
-	commands["PING"] = new PingCmd(*this);
+	commandsMap["WHO"] = new WhoCmd(*this);
+	commandsMap["PING"] = new PingCmd(*this);
 
-
-	debug("Initialized " << commands.size() << " commands.");
+	debug("Initialized " << commandsMap.size() << " commandsMap.");
 }
 
 void Server::startListening()
@@ -90,7 +89,7 @@ void Server::startListening()
 	if (gethostname(_hostname, HOST_NAME_MAX)<0) {
 		throw ServerException("Failed to retrieve hostname");
 	}
-	this->retrievedHostname = _hostname;
+	this->hostname = _hostname;
 	ResponseMsg::setHostname(_hostname);
 
 	this->socketFd = socket(PF_INET, SOCK_STREAM, 0);
@@ -127,7 +126,7 @@ void Server::startListening()
 void Server::acceptConnection()
 {
 	// Check if server is full: if the users don't exceed the maxConnections.
-	if (this->clients.size()>=this->maxConnections) {
+	if (this->clientsMap.size()>=this->maxConnections) {
 		std::cerr << RED << "Server is full: cannot accept new connection." << RESET << std::endl;
 		return;
 	}
@@ -137,26 +136,27 @@ void Server::acceptConnection()
 
 	SocketFd clientFd = accept(this->socketFd, (SocketAddr*)&addr, &addr_len);
 	if (clientFd==-1) {
-		std::cerr << RED << "Someone tried to connect but the `accept` failed..." << RESET<< std::endl;
+		std::cerr << RED << "Someone tried to connect but the `accept` failed..." << RESET << std::endl;
 		return;
 	}
 	if (fcntl(clientFd, F_SETFL, O_NONBLOCK)==-1) {
 		std::cerr << RED << "Could not accept a new user because an error occurred when trying to set the socket as non-blocking" << RESET << std::endl;
 		return;
 	}
-	if (this->clients.find(clientFd)!=this->clients.end()) {
-		delete this->clients[clientFd];
+	if (this->clientsMap.find(clientFd)!=this->clientsMap.end()) {
+		delete this->clientsMap[clientFd];
 	}
-	this->clients[clientFd] = new Client(clientFd);
+	this->clientsMap[clientFd] = new Client(clientFd);
 
 	char hostname[NI_MAXHOST];
-	if (getnameinfo((struct sockaddr*)&addr, addr_len,hostname, sizeof(hostname),NULL, 0, NI_NAMEREQD) == 0) {
+	if (getnameinfo((struct sockaddr*)&addr, addr_len, hostname, sizeof(hostname), NULL, 0, NI_NAMEREQD)==0) {
 		// If getnameinfo succeeded, use the hostname returned by getnameinfo
-	} else {
+	}
+	else {
 		// If getnameinfo fails, use inet_ntop to convert the IP address to a string
 		inet_ntop(AF_INET, &(addr.sin_addr), hostname, sizeof(hostname));
 	}
-	this->clients[clientFd]->setHostname(hostname);
+	this->clientsMap[clientFd]->setHostname(hostname);
 
 	this->allPollFds.push_back(pollfd());
 	this->allPollFds.back().fd = clientFd;
@@ -206,7 +206,7 @@ static void findNextDelimiter(const std::string& str, size_t& pos, size_t& delim
 	}
 }
 
-bool Server::tryToRunClientCommand(Client* client)
+bool Server::runClientCommands(Client* client)
 {
 	int commandCount = 0;
 
@@ -235,7 +235,7 @@ bool Server::tryToRunClientCommand(Client* client)
 			commandName = commandArgs.substr(0, firstSpace);
 			commandArgs = commandArgs.substr(firstSpace+1);
 		}
-		if (this->commands.find(commandName)==this->commands.end()) {
+		if (this->commandsMap.find(commandName)==this->commandsMap.end()) {
 			client->sendMessage(ResponseMsg::genericResponse(ERR_UNKNOWNCOMMAND, client->getNickname(), "", commandName));
 
 			debugError("Client[" << client->getSocketFd() << "] tried to run unknown command [" << commandName << "] with arguments \"" << commandArgs << "\"");
@@ -243,7 +243,7 @@ bool Server::tryToRunClientCommand(Client* client)
 			findNextDelimiter(client->getLocalBuffer(), pos, delimSize);
 			continue;
 		}
-		CmdInterface* cmd = this->commands[commandName];
+		CmdInterface* cmd = this->commandsMap[commandName];
 		commandCount++;
 
 		try {
@@ -255,7 +255,8 @@ bool Server::tryToRunClientCommand(Client* client)
 			cmd->run(*client, params);
 		}
 		catch (CmdInterface::CmdSyntaxErrorException& e) {
-			debugError("Client[" << client->getSocketFd() << "] tried to run command [" << commandName << "] with arguments \"" << commandArgs << "\" but provided invalid arguments. Error: " << e.what());
+			debugError("Client[" << client->getSocketFd() << "] tried to run command [" << commandName << "] with arguments \"" << commandArgs << "\" but provided invalid arguments. Error: "
+								 << e.what());
 			client->sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, client->getNickname(), "", e.what()));
 		}
 		catch (CmdInterface::CmdAuthErrorException& e) {
@@ -285,7 +286,7 @@ bool Server::sendMessageToChannel(Channel* channel, const std::vector<SocketFd>&
 	for (ClientsVector::iterator it = channelClients.begin(); it!=channelClients.end(); ++it) {
 		if (!*it) { continue; }
 		// Skip clients that are in the exclude list
-		Client *client = *it;
+		Client* client = *it;
 		if (std::find(excludeClients.begin(), excludeClients.end(), client->getSocketFd())!=excludeClients.end()) {
 			continue;
 		}
@@ -300,8 +301,8 @@ bool Server::sendMessageToChannel(Channel* channel, const std::vector<SocketFd>&
 
 void Server::deleteDisconnectedClients()
 {
-	ClientsMap::iterator clientMapIt = this->clients.begin();
-	while (clientMapIt!=this->clients.end()) {
+	ClientsMap::iterator clientMapIt = this->clientsMap.begin();
+	while (clientMapIt!=this->clientsMap.end()) {
 		Client* client = clientMapIt->second;
 		if (client && client->getState()==CS_DISCONNECTED) {
 			debug("Client[" << clientMapIt->first << "] disconnected. Deleting client...");
@@ -317,15 +318,15 @@ void Server::deleteDisconnectedClients()
 			}
 			// TODO: remove client from it's channels
 			int removedChannelCount = 0;
-			for(ChannelsMap::iterator channelMapIt = this->channels.begin(); channelMapIt!=this->channels.end(); ++channelMapIt) {
+			for (ChannelsMap::iterator channelMapIt = this->channelsMap.begin(); channelMapIt!=this->channelsMap.end(); ++channelMapIt) {
 				Channel* channel = channelMapIt->second;
 				if (!channel) { continue; }
 				if (channel->removeClient(client)) {
 					removedChannelCount++;
 				}
 			}
-			debug("Client[" << clientMapIt->first << "] disconnected. Removed from " << removedChannelCount << " channels.");
-			this->clients.erase(clientMapIt++);
+			debug("Client[" << clientMapIt->first << "] disconnected. Removed from " << removedChannelCount << " channelsMap.");
+			this->clientsMap.erase(clientMapIt++);
 
 			delete client;
 		}
@@ -368,15 +369,15 @@ void Server::run()
 				if (clientPoll->revents & (POLLIN | POLLHUP | POLLERR)) {
 					if (clientPoll->revents & (POLLHUP | POLLERR)) {
 						// Client disconnected forcefully (CTRL+C, etc.)
-						if (this->clients.find(clientPoll->fd)!=this->clients.end()) {
-							this->clients[clientPoll->fd]->setState(CS_DISCONNECTED);
+						if (this->clientsMap.find(clientPoll->fd)!=this->clientsMap.end()) {
+							this->clientsMap[clientPoll->fd]->setState(CS_DISCONNECTED);
 						}
 					}
 					else if (clientPoll->revents & POLLIN) {
 						// receive && parse message
 						debugInfo("Client[" << clientPoll->fd << "] has sent a message. Receiving...");
-						this->receiveClientMessage(this->clients[clientPoll->fd]);
-						this->tryToRunClientCommand(this->clients[clientPoll->fd]);
+						this->receiveClientMessage(this->clientsMap[clientPoll->fd]);
+						this->runClientCommands(this->clientsMap[clientPoll->fd]);
 					}
 				}
 			}
@@ -392,7 +393,7 @@ bool Server::isPasswordValid(const std::string& passwordToCheck) const { return 
 
 Client* Server::findClientByNickname(const std::string& nickname, bool checkOnlyFullyRegistered) const
 {
-	for (ClientsMap::const_iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
+	for (ClientsMap::const_iterator it = this->clientsMap.begin(); it!=this->clientsMap.end(); ++it) {
 		if (it->second->getNickname()==nickname && (!checkOnlyFullyRegistered || it->second->isFullyRegistered())) {
 			return it->second;
 		}
@@ -405,7 +406,7 @@ void Server::notifyClientNicknameChangeToOthers(Client& client, const std::strin
 	ClientsMap receivers;
 
 	receivers[client.getSocketFd()] = &client;
-	for (ChannelsMap::iterator it = this->channels.begin(); it!=this->channels.end(); ++it) {
+	for (ChannelsMap::iterator it = this->channelsMap.begin(); it!=this->channelsMap.end(); ++it) {
 		if (!it->second) { continue; }
 		if (it->second->isClientInChannel(&client)) {
 			ClientsVector channelClients = it->second->getAllClients();
@@ -427,20 +428,20 @@ void Server::notifyClientNicknameChangeToOthers(Client& client, const std::strin
 Channel* Server::addChannel(const std::string& name)
 {
 	if (getChannelByName(name)==NULL)
-		this->channels[name] = new Channel(*this, name, "");
-	return this->channels[name];
+		this->channelsMap[name] = new Channel(*this, name, "");
+	return this->channelsMap[name];
 }
 
 
 // GETTERS/SETTERS ------------------------------------------------------------
 
-const std::string& Server::getRetrievedHostname() const { return this->retrievedHostname; }
+const std::string& Server::getRetrievedHostname() const { return this->hostname; }
 
 Channel* Server::getChannelByName(const std::string& channelName)
 {
-	if (this->channels.find(channelName)==this->channels.end())
+	if (this->channelsMap.find(channelName)==this->channelsMap.end())
 		return NULL;
-	return this->channels[channelName];
+	return this->channelsMap[channelName];
 }
 
 

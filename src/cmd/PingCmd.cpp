@@ -1,13 +1,9 @@
 #include "cmd/PingCmd.hpp"
 
 PingCmd::PingCmd(Server& server)
-		:CmdInterface("PING", server, false)
-{
-}
+		:CmdInterface("PING", server, false) { }
 
-PingCmd::~PingCmd()
-{
-}
+PingCmd::~PingCmd() { }
 
 void PingCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {

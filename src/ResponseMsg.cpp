@@ -129,11 +129,10 @@ std::string ResponseMsg::inviteResponse(const Client& requestedFrom, const Clien
 {
 	std::stringstream ss;
 
-	ss << ":" << requestedFrom.getNickname() << " INVITE " << invitedClient.getNickname() << " :" + channelName;
+	ss << ":" << requestedFrom.getNickname() << " INVITE " << invitedClient.getNickname() << " :"+channelName;
 	debugResponse(ss.str());
 	return ss.str();
 }
-
 
 std::string ResponseMsg::nicknameChangeResponse(const Client& client, const std::string& newNickname)
 {

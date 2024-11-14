@@ -1,15 +1,12 @@
 #ifndef FT_IRC_CHANNEL_HPP
 #define FT_IRC_CHANNEL_HPP
 
-#include <map>
-#include <string>
+#include "IRCUtils.hpp"
 
-class Channel;
 #include "Server.hpp"
 #include "Client.hpp"
 
 class Channel {
-// Assignable from constructor
 private:
 	const Server* server;
 	std::string name;
@@ -24,27 +21,21 @@ private:
 	/// List of invited clients but not yet joined
 	std::vector<SocketFd> invitedClients;
 
+	/// List of operator clients
 	std::vector<SocketFd> operatorClients;
 
 	/// List of banned clients
 	//std::vector<SocketFd> bannedClients;
 
-	/// TODO: add settings for `MODE` command
-	/// password for the channel. If empty, the channel is public
 	std::string password;
 	bool isPasswordProtected;
 
 	bool isInviteOnly;
 	bool isTopicChangePrivilege;
 
-
-
 public:
 	Channel(const Server& server, const std::string& name, const std::string& topic);
 	~Channel();
-
-public:
-// CLIENT RELATED METHODS
 
 	ClientsVector getAllClients() const;
 	Client* findClientByNickname(const std::string& nickname);
@@ -53,10 +44,7 @@ public:
 	bool isClientInChannel(Client* client) const;
 	bool isClientInvited(Client* client) const;
 
-
-
 	bool inviteClient(Client* client);
-
 
 	bool addClient(Client* client);
 	bool makeOperator(Client* client);
@@ -75,7 +63,7 @@ public:
 	bool getIsInviteOnly() const;
 	bool getIsTopicChangeOnlyForOperators() const;
 	std::string getClientsNicknames() const;
-	bool isPasswordValid(const std::string &passw) const;
+	bool isPasswordValid(const std::string& passw) const;
 
 	void setName(const std::string& name);
 	void setTopic(const std::string& topic);

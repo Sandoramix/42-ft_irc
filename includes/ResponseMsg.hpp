@@ -1,8 +1,8 @@
 #ifndef FT_IRC_RESPONSEMSG_HPP
 #define FT_IRC_RESPONSEMSG_HPP
 
-#include <string>
-#include <iostream>
+#include "IRCUtils.hpp"
+
 #include "Client.hpp"
 
 /**

@@ -2,13 +2,9 @@
 #include "cmd/WhoCmd.hpp"
 
 WhoCmd::WhoCmd(Server& server)
-		:CmdInterface("WHO", server, true)
-{
-}
+		:CmdInterface("WHO", server, true) { }
 
-WhoCmd::~WhoCmd()
-{
-}
+WhoCmd::~WhoCmd() { }
 
 void WhoCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {

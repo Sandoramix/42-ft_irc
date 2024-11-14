@@ -1,13 +1,9 @@
 #include "cmd/PrivMsgCmd.hpp"
 
 PrivMsgCmd::PrivMsgCmd(Server& server)
-		:CmdInterface("PRIVMSG", server, true)
-{
-}
+		:CmdInterface("PRIVMSG", server, true) { }
 
-PrivMsgCmd::~PrivMsgCmd()
-{
-}
+PrivMsgCmd::~PrivMsgCmd() { }
 
 void PrivMsgCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {

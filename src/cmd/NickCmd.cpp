@@ -1,13 +1,9 @@
 #include "cmd/NickCmd.hpp"
 
 NickCmd::NickCmd(Server& server)
-		:CmdInterface("NICK", server, false)
-{
-}
+		:CmdInterface("NICK", server, false) { }
 
-NickCmd::~NickCmd()
-{
-}
+NickCmd::~NickCmd() { }
 
 void NickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
@@ -51,7 +47,7 @@ void NickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 	requestedFrom.setNickname(newNickname);
 
 	requestedFrom.setIsNickCmdSent(true);
-	if (requestedFrom.getIsUserCmdSent() && requestedFrom.getIsNickCmdSent() && !requestedFrom.isFullyRegistered()) {
+	if (requestedFrom.isUserCmdSent() && requestedFrom.isNickCmdSent() && !requestedFrom.isFullyRegistered()) {
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_WELCOME, requestedFrom.getNickname(), ""));
 		requestedFrom.setState(CS_ISFULLY_REGISTERED);
 	}

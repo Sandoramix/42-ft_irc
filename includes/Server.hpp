@@ -1,29 +1,23 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
+
 # ifndef IRC_MAX_CONNECTIONS
 #  define IRC_MAX_CONNECTIONS 420
 # endif
 # ifndef RECV_BUFFER_SIZE
 #  define RECV_BUFFER_SIZE 1024
 # endif
-#include <string>
 
 extern bool SERVER_RUNNING;
 
-class Server;
-class Client;
-
 #include "IRCUtils.hpp"
+
 #include "cmd/CmdInterface.hpp"
 #include "Client.hpp"
 #include "Channel.hpp"
 #include "ResponseMsg.hpp"
 
-typedef std::map<const std::string, CmdInterface*> ServerCommandsMap;
-typedef std::map<std::string, Channel*> ChannelsMap;
-
 class Server {
-// Assignable from outside
 private:
 	unsigned short port;
 	std::string password;
@@ -32,36 +26,39 @@ private:
 
 // Server-only members
 private:
-	std::string retrievedHostname;
-	/// Map of implemented commands (key: command name, value: command object)
-	ServerCommandsMap commands;
+	std::string hostname;
+	/// Map of implemented commands (key: command name, value: command instance)
+	ServerCommandsMap commandsMap;
+
+	/// Channels map
+	ChannelsMap channelsMap;
 
 	/// Map of currently connected clients (key: client fd, value: client object)
-	ClientsMap clients;
+	ClientsMap clientsMap;
 
 	/// Socket file descriptor
 	SocketFd socketFd;
 	/// Socket address
 	SocketAddrIn socketAddr;
+
 	/// polling fds
 	AllPollFdsVector allPollFds;
 
-	// CHANNELS
-	ChannelsMap channels;
-
-// Server-only methods
 private:
+	/// Initialize commands
 	void initCommands();
+
+	/// Start listening: bind socket and listen. Create server pollfd.
 	void startListening();
 
-	/// Accept connection: add new user
+	/// Accept connection: Add new user
 	void acceptConnection();
 
 	/// Parse data received from client
 	void receiveClientMessage(Client* client);
 
 	/// Try to parse the client buffer as a command if the buffer contains a complete command (ends with '\r\n')
-	bool tryToRunClientCommand(Client* client);
+	bool runClientCommands(Client* client);
 
 	/// Delete disconnected clients
 	void deleteDisconnectedClients();
