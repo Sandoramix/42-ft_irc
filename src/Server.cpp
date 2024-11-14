@@ -13,6 +13,7 @@
 #include "cmd/UserCmd.hpp"
 #include "cmd/PingCmd.hpp"
 #include "cmd/PrivMsgCmd.hpp"
+#include "cmd/WhoCmd.hpp"
 
 // CONSTRUCTOR
 Server::Server(const std::string& host, const std::string& port, const std::string& password)
@@ -75,20 +76,22 @@ void Server::initCommands()
 
 	commands["PRIVMSG"] = new PrivMsgCmd(*this);
 
-
+	// EXTRA COMMANDS
+	commands["WHO"] = new WhoCmd(*this);
 	commands["PING"] = new PingCmd(*this);
+
 
 	debug("Initialized " << commands.size() << " commands.");
 }
 
 void Server::startListening()
 {
-	char hostname[HOST_NAME_MAX];
-	if (gethostname(hostname, HOST_NAME_MAX)<0) {
+	char _hostname[HOST_NAME_MAX];
+	if (gethostname(_hostname, HOST_NAME_MAX)<0) {
 		throw ServerException("Failed to retrieve hostname");
 	}
-	this->retrievedHostname = hostname;
-	ResponseMsg::setHostname(this->retrievedHostname);
+	this->retrievedHostname = _hostname;
+	ResponseMsg::setHostname(_hostname);
 
 	this->socketFd = socket(PF_INET, SOCK_STREAM, 0);
 	if (this->socketFd<=0) {
@@ -387,10 +390,10 @@ void Server::run()
 
 bool Server::isPasswordValid(const std::string& passwordToCheck) const { return this->password==passwordToCheck; }
 
-Client* Server::findClientByNickname(const std::string& nickname) const
+Client* Server::findClientByNickname(const std::string& nickname, bool checkOnlyFullyRegistered) const
 {
 	for (ClientsMap::const_iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
-		if (it->second->getNickname()==nickname) {
+		if (it->second->getNickname()==nickname && (!checkOnlyFullyRegistered || it->second->isFullyRegistered())) {
 			return it->second;
 		}
 	}

@@ -22,7 +22,9 @@ SRC = ./src/Channel.cpp \
 	./src/cmd/PrivMsgCmd.cpp \
 	./src/cmd/TopicCmd.cpp \
 	./src/cmd/UserCmd.cpp \
+	./src/cmd/WhoCmd.cpp \
 	./src/main.cpp
+
 
 all: $(NAME)
 

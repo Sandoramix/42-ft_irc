@@ -1,3 +1,4 @@
+#include <sstream>
 #include "Client.hpp"
 
 Client::Client(const Client& other)
@@ -41,6 +42,12 @@ std::string Client::getUserInfo() const
 {
 	return this->getNickname() + "!" + this->getUsername() + "@" + this->getHostname();
 }
+std::string Client::getWhoInfo(const std::string& channelName)
+{
+	std::stringstream ss;
+	ss << this->nickname << " " << (!channelName.empty() ? channelName : "*") << this->username << " " << this->hostname;
+	return ss.str();
+}
 
 // GETTERS/SETTERS ------------------------------------------------------------
 
@@ -63,23 +70,3 @@ void Client::setUsername(const std::string& username) { this->username = usernam
 void Client::setRealName(const std::string& realName) { this->realName = realName; }
 void Client::setIsUserCmdSent(const bool& isUserCmdSent) { this->isUserCmdSent = isUserCmdSent; }
 void Client::setIsNickCmdSent(const bool& isNickCmdSent) { this->isNickCmdSent = isNickCmdSent; }
-
-
-/*
-bool Channel::isClientOperator(Client* client) const {
-    return std::find(operatorClients.begin(), operatorClients.end(), client->getSocketFd()) != operatorClients.end();
-}
-
-bool Channel::isClientInChannel(Client* client) const {
-    return clients.find(client->getSocketFd()) != clients.end();
-}
-
-bool Channel::removeClient(Client* client) {
-    ClientsMap::iterator it = clients.find(client->getSocketFd());
-    if (it != clients.end()) {
-        clients.erase(it);
-        return true;
-    }
-    return false;
-}
-*/

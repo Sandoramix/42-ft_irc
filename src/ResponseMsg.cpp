@@ -12,10 +12,14 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 	switch (code) {
 	case RPL_WELCOME:
 		return "Welcome to the 42Firenze IRC Server@"+hostname;
+	case RPL_ENDOFWHO:
+		return "End of /WHO list.";
 	case RPL_NOTOPIC:
 		return "No topic is set";
 	case RPL_CHANNELMODEIS:
 		return "Channel modes are:";
+	case RPL_WHOREPLY:
+		return "<User info>";
 	case RPL_NAMREPLY:
 		return "<User list>";
 	case RPL_ENDOFNAMES:
@@ -71,6 +75,7 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 
 // PUBLIC METHODS -------------------------------------------------------------
 
+const std::string& ResponseMsg::getHostname() { return hostname; }
 void ResponseMsg::setHostname(const std::string& newHostname) { hostname = newHostname; }
 
 bool ResponseMsg::isHostnameSet()
@@ -103,7 +108,7 @@ std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& t
 
 	std::string codeAsString = codeStream.str();
 
-	ss << ":" << host << " " << codeAsString << " " << (target.empty() ? "*" : target) << (channelName.empty() ? "" : " "+channelName) << " :" << customMessage;
+	ss << ":" << host << " " << codeAsString << " " << target << (channelName.empty() ? "" : " "+channelName) << " :" << customMessage;
 	debugResponse(ss.str());
 	return ss.str();
 }
@@ -119,6 +124,16 @@ std::string ResponseMsg::genericCommandResponse(const std::string& commandName, 
 	}
 	return ss.str();
 }
+
+std::string ResponseMsg::inviteResponse(const Client& requestedFrom, const Client& invitedClient, const std::string& channelName)
+{
+	std::stringstream ss;
+
+	ss << ":" << requestedFrom.getNickname() << " INVITE " << invitedClient.getNickname() << " :" + channelName;
+	debugResponse(ss.str());
+	return ss.str();
+}
+
 
 std::string ResponseMsg::nicknameChangeResponse(const Client& client, const std::string& newNickname)
 {
@@ -154,5 +169,21 @@ std::string ResponseMsg::userKickedResponse(const std::string& kickerNickname, c
 
 	ss << ":" << kickerNickname << " KICK " << channelName << " " << kickedNickname << (reason.empty() ? "" : " :"+reason);
 	debugResponse(ss.str());
+	return ss.str();
+}
+std::string ResponseMsg::whoResponse(Client* client, const Channel* channel)
+{
+	std::stringstream ss;
+
+	ss << ":" << hostname << " " << RPL_WHOREPLY;
+	ss << " " << client->getNickname();
+	ss << " " << (channel ? channel->getName() : "*");
+	ss << " " << client->getUsername();
+	ss << " " << client->getHostname();
+	ss << " " << hostname;
+	bool isTargetOperator = channel!=NULL && channel->isClientOperator(client);
+	ss << " " << (isTargetOperator ? "O" : "H");
+	ss << " :0";
+	debugResponse("TO[" << client->getSocketFd() << "]: " << ss.str());
 	return ss.str();
 }

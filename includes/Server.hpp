@@ -6,6 +6,7 @@
 # ifndef RECV_BUFFER_SIZE
 #  define RECV_BUFFER_SIZE 1024
 # endif
+#include <string>
 
 extern bool SERVER_RUNNING;
 
@@ -77,18 +78,18 @@ public:
 
 	bool isPasswordValid(const std::string& passwordToCheck) const;
 
-	Client *findClientByNickname(const std::string& nickname) const;
+	Client* findClientByNickname(const std::string& nickname, bool checkOnlyFullyRegistered) const;
 
 	void notifyClientNicknameChangeToOthers(Client& client, const std::string& newNickname);
 
-	Channel* addChannel(const std::string &name);
+	Channel* addChannel(const std::string& name);
 
 	bool sendMessageToChannel(Channel* channel, const std::vector<SocketFd>& excludeClients, const std::string& message) const;
 
 // GETTERS/SETTERS
 public:
 	const std::string& getRetrievedHostname() const;
-	Channel* getChannelByName(const std::string &channelName);
+	Channel* getChannelByName(const std::string& channelName);
 //EXCEPTIONS
 public:
 	/// BAD CONFIGURATION EXCEPTION

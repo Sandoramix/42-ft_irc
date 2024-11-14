@@ -66,6 +66,7 @@ public:
 	const std::string& getRealName() const;
 	const bool& getIsUserCmdSent() const;
 	const bool& getIsNickCmdSent() const;
+	std::string getWhoInfo(const std::string& channelName);
 
 	void setSocketFd(const int& socket_fd);
 	void setState(const ClientState& state);
