@@ -29,7 +29,7 @@ void PrivMsgCmd::run(Client& requestedFrom, const std::vector<std::string>& para
 			return;
 		}
 		if (!channel->isClientInChannel(&requestedFrom)) {
-			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), targetClientOrChannel, "You are not a channel operator"));
+			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTONCHANNEL, requestedFrom.getNickname(), targetClientOrChannel));
 			return;
 		}
 		std::vector<SocketFd> excludeClients(1);
