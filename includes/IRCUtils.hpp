@@ -5,8 +5,10 @@
 #  define DEBUG false
 # endif
 
+#include <cstring>
+#include <cerrno>
+#include <climits>
 #include <exception>
-#include <iostream>
 #include <string>
 #include <map>
 #include <csignal>
@@ -16,6 +18,8 @@
 #include <vector>
 #include <sstream>
 #include <stdexcept>
+
+#include <unistd.h>
 
 #include <poll.h>
 #include <fcntl.h>
@@ -43,6 +47,7 @@ typedef std::map<std::string, Channel*> ChannelsMap;
 namespace IRCUtils {
 	bool isValidChannelStartingCharacter(const std::string& channel);
 	bool isValidChannelName(const std::string& channel);
+	bool caseInsensitiveStringCompare(const std::string& str1, const std::string& str2);
 };
 
 // DEBUG-RELATED MACROS -------------------------------------------------------
@@ -84,6 +89,5 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 	}
 	return os << "]";
 }
-
 
 #endif //FT_IRC_IRCUTILS_HPP

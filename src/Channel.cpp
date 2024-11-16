@@ -48,11 +48,14 @@ ClientsVector Channel::getAllClients() const
 	}
 	return result;
 }
+
+
 Client* Channel::findClientByNickname(const std::string& nickname)
 {
 	for (ClientsMap::iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
-		if (it->second->getNickname()==nickname)
+		if (IRCUtils::caseInsensitiveStringCompare(it->second->getNickname(), nickname)){
 			return it->second;
+		}
 	}
 	return NULL;
 }

@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 	}
 
 	try {
-		Server server("0.0.0.0", argv[1], argv[2]);
+		Server server(argv[1], argv[2]);
 		signal(SIGINT, handleSigInt);
 		server.run();
 	}

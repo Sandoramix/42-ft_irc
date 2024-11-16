@@ -83,7 +83,7 @@ bool ResponseMsg::isHostnameSet()
 	if (!ResponseMsg::hostname.empty()) {
 		return true;
 	}
-	std::cerr << "Error: hostname is empty" << std::endl;
+	std::cerr << "Error: host is empty" << std::endl;
 	return false;
 }
 
@@ -108,7 +108,7 @@ std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& t
 
 	std::string codeAsString = codeStream.str();
 
-	ss << ":" << host << " " << codeAsString << " " << target << (channelName.empty() ? "" : " "+channelName) << " :" << customMessage;
+	ss << ":" << host << " " << codeAsString << " " << (target.empty() ? "*" : target) << (channelName.empty() ? "" : " "+channelName) << " :" << customMessage;
 	debugResponse(ss.str());
 	return ss.str();
 }

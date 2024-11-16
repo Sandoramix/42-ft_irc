@@ -1,6 +1,3 @@
-#include <unistd.h>
-#include <cerrno>
-#include <climits>
 #include "Server.hpp"
 
 #include "cmd/InviteCmd.hpp"
@@ -15,8 +12,46 @@
 #include "cmd/PrivMsgCmd.hpp"
 #include "cmd/WhoCmd.hpp"
 
+void Server::initServerIp()
+{
+	SocketFd tempSocketFd = socket(PF_INET, SOCK_STREAM, 0);
+	if (tempSocketFd<=0) {
+		throw ServerException("Server IP retrieval: failed to create socket");
+	}
+
+	// Fake connection to 8.8.8.8 (Google's DNS)
+	SocketAddrIn tempSocketAddr;
+	tempSocketAddr.sin_family = AF_INET;
+	tempSocketAddr.sin_addr.s_addr = inet_addr("8.8.8.8");
+	tempSocketAddr.sin_port = htons(53);
+
+	if (connect(tempSocketFd, (struct sockaddr*)&tempSocketAddr, sizeof(tempSocketAddr))<0) {
+		close(tempSocketFd);
+		throw ServerException("Server IP retrieval: failed to connect to 8.8.8.8");
+	}
+
+	SocketAddrIn localAddr;
+	socklen_t localAddrLen = sizeof(localAddr);
+	if (getsockname(tempSocketFd, (struct sockaddr*)&localAddr, &localAddrLen)<0) {
+		close(tempSocketFd);
+		throw ServerException("Server IP retrieval: failed to get socket name");
+	}
+	char* ipStr = inet_ntoa(localAddr.sin_addr);
+	if (!ipStr) {
+		close(tempSocketFd);
+		throw ServerException("Server IP retrieval: failed to convert IP to string");
+	}
+	std::string result(ipStr);
+
+	close(tempSocketFd);
+
+	this->host = result;
+	ResponseMsg::setHostname(result);
+
+}
+
 // CONSTRUCTOR
-Server::Server(const std::string& host, const std::string& port, const std::string& password)
+Server::Server(const std::string& port, const std::string& password)
 {
 	// PORT VALIDATION
 	if (port.empty()) { throw BadConfigException("Invalid port: empty string."); }
@@ -31,12 +66,12 @@ Server::Server(const std::string& host, const std::string& port, const std::stri
 	if (password.empty()) { throw BadConfigException("Invalid password: empty string."); }
 	this->password = password;
 
-	// HOST VALIDATION
-	if (host.empty()) { throw BadConfigException("Invalid host: empty string."); }
-	this->host = host;
 
 	this->maxConnections = IRC_MAX_CONNECTIONS;
-	debug("Server configured with host=" << this->host << ", port=" << this->port << ", password=" << this->password << ", maxConnections=" << this->maxConnections);
+
+	this->initServerIp();
+
+	debug("Server configured with port=" << this->port << ", password=" << this->password << ", maxConnections=" << this->maxConnections);
 }
 
 // DESTRUCTOR
@@ -85,13 +120,6 @@ void Server::initCommands()
 
 void Server::startListening()
 {
-	char _hostname[HOST_NAME_MAX];
-	if (gethostname(_hostname, HOST_NAME_MAX)<0) {
-		throw ServerException("Failed to retrieve hostname");
-	}
-	this->hostname = _hostname;
-	ResponseMsg::setHostname(_hostname);
-
 	this->socketFd = socket(PF_INET, SOCK_STREAM, 0);
 	if (this->socketFd<=0) {
 		throw ServerException("Socket creation failed");
@@ -120,49 +148,69 @@ void Server::startListening()
 	this->allPollFds.push_back(pollfd());
 	this->allPollFds.back().fd = this->socketFd;
 	this->allPollFds.back().events = POLLIN;
-	debugInfo("Server: socket created && bound && listening. socketFd: " << this->socketFd);
+	debugInfo("Server: socket created && bound && listening. socketFd: " << this->socketFd << ", host: " << this->host);
 }
 
 void Server::acceptConnection()
 {
-	// Check if server is full: if the users don't exceed the maxConnections.
-	if (this->clientsMap.size()>=this->maxConnections) {
-		std::cerr << RED << "Server is full: cannot accept new connection." << RESET << std::endl;
-		return;
-	}
-
 	SocketAddrIn addr;
 	socklen_t addr_len = sizeof(addr);
-
 	SocketFd clientFd = accept(this->socketFd, (SocketAddr*)&addr, &addr_len);
 	if (clientFd==-1) {
 		std::cerr << RED << "Someone tried to connect but the `accept` failed..." << RESET << std::endl;
 		return;
 	}
+
+	// Check if server is full: if the users don't exceed the maxConnections.
+	if (this->clientsMap.size()>=this->maxConnections) {
+		std::cerr << RED << "Server is full: cannot accept new connection." << RESET << std::endl;
+		send(clientFd, ":Server is full", 21, 0);
+		close(clientFd);
+		return;
+	}
+
 	if (fcntl(clientFd, F_SETFL, O_NONBLOCK)==-1) {
 		std::cerr << RED << "Could not accept a new user because an error occurred when trying to set the socket as non-blocking" << RESET << std::endl;
+		send(clientFd, ":A server side error occurred", 25, 0);
+		close(clientFd);
 		return;
 	}
 	if (this->clientsMap.find(clientFd)!=this->clientsMap.end()) {
 		delete this->clientsMap[clientFd];
 	}
-	this->clientsMap[clientFd] = new Client(clientFd);
+	Client* client = new Client(clientFd);
+	this->clientsMap[clientFd] = client;
 
-	char hostname[NI_MAXHOST];
-	if (getnameinfo((struct sockaddr*)&addr, addr_len, hostname, sizeof(hostname), NULL, 0, NI_NAMEREQD)==0) {
-		// If getnameinfo succeeded, use the hostname returned by getnameinfo
+	struct addrinfo hints;
+	std::memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+
+	const char* clientIp = inet_ntoa(addr.sin_addr);
+
+	if (!clientIp) {
+		std::cerr << "inet_ntoa failed" << std::endl;
+		return;
 	}
-	else {
-		// If getnameinfo fails, use inet_ntop to convert the IP address to a string
-		inet_ntop(AF_INET, &(addr.sin_addr), hostname, sizeof(hostname));
+
+	std::string clientHostname(clientIp);
+
+	if (clientHostname == "127.0.0.1") {
+		clientHostname = this->host;
+		addr.sin_addr.s_addr = inet_addr(this->host.c_str());
 	}
-	this->clientsMap[clientFd]->setHostname(hostname);
+
+	std::cout << "Hostname: [" << clientHostname << "]" << std::endl;
+
+
+
+	client->setHostname(clientHostname);
 
 	this->allPollFds.push_back(pollfd());
 	this->allPollFds.back().fd = clientFd;
 	this->allPollFds.back().events = POLLIN | POLLHUP;
 
-	debugSuccess("Client[" << clientFd << "]: new user connected from " << hostname);
+	debugSuccess("Client[" << clientFd << "]: new user connected from " << this->clientsMap[clientFd]->getHostname());
 }
 
 void Server::receiveClientMessage(Client* client)
@@ -394,7 +442,7 @@ bool Server::isPasswordValid(const std::string& passwordToCheck) const { return 
 Client* Server::findClientByNickname(const std::string& nickname, bool checkOnlyFullyRegistered) const
 {
 	for (ClientsMap::const_iterator it = this->clientsMap.begin(); it!=this->clientsMap.end(); ++it) {
-		if (it->second->getNickname()==nickname && (!checkOnlyFullyRegistered || it->second->isFullyRegistered())) {
+		if (IRCUtils::caseInsensitiveStringCompare(it->second->getNickname(), nickname) && (!checkOnlyFullyRegistered || it->second->isFullyRegistered())) {
 			return it->second;
 		}
 	}
@@ -435,7 +483,7 @@ Channel* Server::addChannel(const std::string& name)
 
 // GETTERS/SETTERS ------------------------------------------------------------
 
-const std::string& Server::getRetrievedHostname() const { return this->hostname; }
+const std::string& Server::getRetrievedHostname() const { return this->host; }
 
 Channel* Server::getChannelByName(const std::string& channelName)
 {
@@ -443,6 +491,8 @@ Channel* Server::getChannelByName(const std::string& channelName)
 		return NULL;
 	return this->channelsMap[channelName];
 }
+
+
 
 
 // EXCEPTIONS -----------------------------------------------------------------

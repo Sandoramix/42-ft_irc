@@ -17,16 +17,17 @@ extern bool SERVER_RUNNING;
 #include "Channel.hpp"
 #include "ResponseMsg.hpp"
 
+
 class Server {
 private:
 	unsigned short port;
 	std::string password;
-	std::string host;
+
 	unsigned int maxConnections;
 
 // Server-only members
 private:
-	std::string hostname;
+	std::string host;
 	/// Map of implemented commands (key: command name, value: command instance)
 	ServerCommandsMap commandsMap;
 
@@ -45,6 +46,8 @@ private:
 	AllPollFdsVector allPollFds;
 
 private:
+	void initServerIp();
+
 	/// Initialize commands
 	void initCommands();
 
@@ -69,7 +72,7 @@ private:
 	//bool sendMessageToChannel(Channel *channel, const std::string& message) const;
 
 public:
-	Server(const std::string& host, const std::string& port, const std::string& password);
+	Server(const std::string& port, const std::string& password);
 	~Server();
 	void run();
 
