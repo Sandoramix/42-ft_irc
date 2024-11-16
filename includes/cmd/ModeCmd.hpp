@@ -20,7 +20,6 @@ private:
 	};
 
 	bool executeViewOnlyMode(Client& requestedFrom, Channel* channel, const std::vector<std::string>& params);
-	void showChannelModes(Client& requestedFrom, Channel* channel);
 };
 
 #endif //FT_IRC_MODECMD_HPP

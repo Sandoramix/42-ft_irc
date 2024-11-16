@@ -54,7 +54,7 @@ public:
 
 // GETTERS/SETTERS
 public:
-	const std::string& getName() const;
+	std::string getName() const;
 	const std::string& getTopic() const;
 	const std::string& getPassword() const;
 	bool getPasswordProtected() const;

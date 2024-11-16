@@ -6,8 +6,26 @@ std::string ResponseMsg::hostname;
 
 ResponseMsg::ResponseMsg() { }
 ResponseMsg::~ResponseMsg() { }
+//------------------------------------------------------------------------------
 
-std::string ResponseMsg::getDefaultMessage(ResponseCode code)
+// Pad code with leading zeros (max 3 digits). Example: 1 -> "001"
+std::ostream& operator<<(std::ostream& os, const ResponseCode& code)
+{
+	std::string codeAsString;
+
+	std::stringstream _code_stream;
+	size_t _code = code;
+	_code_stream << _code;
+	codeAsString = _code_stream.str();
+
+	codeAsString.insert(0, 3-codeAsString.size(), '0');
+	os << codeAsString;
+	return os;
+}
+//------------------------------------------------------------------------------
+
+
+std::string ResponseMsg::getDefaultCodeMessage(ResponseCode code)
 {
 	switch (code) {
 	case RPL_WELCOME:
@@ -71,64 +89,131 @@ std::string ResponseMsg::getDefaultMessage(ResponseCode code)
 	}
 }
 
+//------------------------------------------------------------------------------
 
-
-// PUBLIC METHODS -------------------------------------------------------------
-
-const std::string& ResponseMsg::getHostname() { return hostname; }
 void ResponseMsg::setHostname(const std::string& newHostname) { hostname = newHostname; }
+std::string ResponseMsg::getHostname() { return hostname.empty() ? "*" : hostname; }
 
-bool ResponseMsg::isHostnameSet()
+//------------------------------------------------------------------------------
+
+std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& targetNickname)
 {
-	if (!ResponseMsg::hostname.empty()) {
-		return true;
-	}
-	std::cerr << "Error: host is empty" << std::endl;
-	return false;
+	return genericResponse(code, targetNickname, getDefaultCodeMessage(code));
 }
 
-std::stringstream& ResponseMsg::generateResponseCommonPart(std::stringstream& ss, ResponseCode code, const std::string& target)
-{
-	std::string host = isHostnameSet() ? hostname : "*";
-
-	std::stringstream codeStream;
-	codeStream << code;
-	int codeSize = codeStream.str().size();
-	codeStream.str("");
-	while (codeStream.str().size()+codeSize<3) {
-		codeStream << "0";
-	}
-	codeStream << code;
-
-	std::string codeAsString = codeStream.str();
-
-	ss << ":" << host << " " << codeAsString << " " << (target.empty() ? "*" : target);
-	return ss;
-}
-
-std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target, const std::string& channelName)
-{
-	return genericResponse(code, target, channelName, getDefaultMessage(code));
-}
-
-std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target, const std::string& channelName, const std::string& customMessage)
+std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& targetNickname, const std::string& customMessage)
 {
 	std::stringstream ss;
-	generateResponseCommonPart(ss, code, target);
-	ss << (channelName.empty() ? "" : " "+channelName) << " :" << customMessage;
+
+	ss << ":" << getHostname()
+	   << code
+	   << " " << (targetNickname.empty() ? "*" : targetNickname)
+	   << " :" << customMessage;
+
 	debugResponse(ss.str());
 	return ss.str();
 }
-std::string ResponseMsg::genericCommandResponse(const std::string& commandName, const std::vector<std::string>& params)
+
+std::string ResponseMsg::errorResponse(ResponseCode code, const std::string& targetNickname, const std::string& commandOrChannelName)
 {
-	std::string host = isHostnameSet() ? hostname : "*";
+	return errorResponse(code, targetNickname, commandOrChannelName, getDefaultCodeMessage(code));
+}
+
+std::string ResponseMsg::errorResponse(ResponseCode code, const std::string& targetNickname, const std::string& commandOrChannelName, const std::string& customMessage)
+{
+	std::stringstream ss;
+
+	ss << ":" << getHostname()
+	   << code
+	   << " " << (targetNickname.empty() ? "*" : targetNickname)
+	   << " " << (commandOrChannelName.empty() ? "*" : commandOrChannelName)
+	   << " :" << customMessage;
+
+	debugResponse(ss.str());
+	return ss.str();
+}
+
+std::string ResponseMsg::noticeResponse(const std::string& senderNickname, const std::string& commandName, const std::string& message)
+{
+	std::stringstream ss;
+
+	ss << ":" << getHostname()
+	   << " " << (senderNickname.empty() ? "*" : senderNickname)
+	   << " " << (commandName.empty() ? "*" : commandName)
+	   << " :" << message;
+	debugResponse(ss.str());
+	return ss.str();
+}
+std::string ResponseMsg::noticeResponse(const std::string& senderNickname, const std::string& targetNickname, const std::string& commandName, const std::string& message)
+{
+	std::stringstream ss;
+
+	ss << ":" << getHostname()
+	   << " " << (senderNickname.empty() ? "*" : senderNickname)
+	   << " " << (commandName.empty() ? "*" : commandName)
+	   << " " << (targetNickname.empty() ? "*" : targetNickname)
+	   << " :" << message;
+	debugResponse(ss.str());
+	return ss.str();
+}
+
+std::string ResponseMsg::welcomeResponse(const Client& client)
+{
+	std::stringstream ss;
+
+	ss << ":" << getHostname() << RPL_WELCOME << " " << client.getUserInfo() << " :Welcome to this IRC Server";
+	debugResponse(ss.str());
+	return ss.str();
+}
+
+std::string ResponseMsg::modeUpdateResponse(const std::vector<std::string>& params)
+{
 
 	std::stringstream ss;
 
-	ss << ":" << host << " " << commandName << (params.empty() ? "" : " ");
+	ss << ":" << getHostname() << " " << "MODE" << (params.empty() ? "" : " ");
 	for (size_t i = 0; i<params.size(); i++) {
 		if (i>0) { ss << " "; }
 		ss << params[i];
+	}
+	return ss.str();
+}
+
+std::string ResponseMsg::replyModeActiveListResponse(const Channel& channel)
+{
+	std::stringstream ss;
+	std::vector<std::string> modeValues;
+
+	ss << channel.getName() << " MODE ";
+
+	int enabledModes = 0;
+	ss << "+";
+	if (channel.getIsInviteOnly()) {
+		ss << "i";
+		enabledModes++;
+	}
+	if (channel.getIsTopicChangeOnlyForOperators()) {
+		ss << "t";
+		enabledModes++;
+	}
+	if (channel.getPasswordProtected()) {
+		ss << "k";
+		modeValues.push_back(channel.getPassword());
+		enabledModes++;
+	}
+	if (channel.getMaxClients()>0) {
+		ss << "l";
+		std::stringstream limit;
+		limit << channel.getMaxClients();
+		modeValues.push_back(limit.str());
+		enabledModes++;
+	}
+	if (enabledModes > 0){
+		ss << " ";
+		for (size_t i = 0; i<modeValues.size(); i++) {
+			if (i>0) { ss << " "; }
+			ss << modeValues[i];
+		}
 	}
 	return ss.str();
 }
@@ -156,6 +241,27 @@ std::string ResponseMsg::joinConfirmResponse(const Client& client, const std::st
 	debugResponse(ss.str());
 	return ss.str();
 }
+
+std::string ResponseMsg::replyNamesListResponse(const Client& client, const Channel& channel, const std::string& userList)
+{
+	std::stringstream ss;
+	const std::string& channelName = channel.getName();
+
+	ss << ":" << getHostname() << " " << RPL_NAMREPLY << " " << client.getNickname() << " = " << (channelName.empty() ? "*" : channelName) << " " << userList;
+	debugResponse(ss.str());
+	return ss.str();
+}
+std::string ResponseMsg::replyEndOfNamesResponse(const Client& client, const Channel& channel)
+{
+	std::stringstream ss;
+	const std::string& channelName = channel.getName();
+
+	ss << ":" << getHostname() << " " << RPL_ENDOFNAMES << " " << client.getNickname() << " " << (channelName.empty() ? "*" : channelName) << " :End of /NAMES list.";
+	debugResponse(ss.str());
+	return ss.str();
+}
+
+
 std::string ResponseMsg::pongResponse(const std::string& token)
 {
 	std::stringstream ss;
@@ -194,3 +300,5 @@ std::string ResponseMsg::whoResponse(Client* client, const Channel* channel)
 	debugResponse("TO[" << client->getSocketFd() << "]: " << ss.str());
 	return ss.str();
 }
+
+

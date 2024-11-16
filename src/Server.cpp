@@ -284,7 +284,7 @@ bool Server::runClientCommands(Client* client)
 			commandArgs = commandArgs.substr(firstSpace+1);
 		}
 		if (this->commandsMap.find(commandName)==this->commandsMap.end()) {
-			client->sendMessage(ResponseMsg::genericResponse(ERR_UNKNOWNCOMMAND, client->getNickname(), commandName, "command not found"));
+			client->sendMessage(ResponseMsg::errorResponse(ERR_UNKNOWNCOMMAND, client->getNickname(), commandName, "command not found"));
 
 			debugError("Client[" << client->getSocketFd() << "] tried to run unknown command [" << commandName << "] with arguments \"" << commandArgs << "\"");
 
@@ -305,7 +305,7 @@ bool Server::runClientCommands(Client* client)
 		catch (CmdInterface::CmdSyntaxErrorException& e) {
 			debugError("Client[" << client->getSocketFd() << "] tried to run command [" << commandName << "] with arguments \"" << commandArgs << "\" but provided invalid arguments. Error: "
 								 << e.what());
-			client->sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, client->getNickname(), "", e.what()));
+			client->sendMessage(ResponseMsg::errorResponse(ERR_NEEDMOREPARAMS, client->getNickname(), "", e.what()));
 		}
 		catch (CmdInterface::CmdAuthErrorException& e) {
 			debugError("Client[" << client->getSocketFd() << "] tried to run command [" << commandName << "] with arguments \"" << commandArgs << "\" but is not authenticated");
@@ -325,7 +325,6 @@ bool Server::sendMessageToClient(Client* client, const std::string& message) con
 
 bool Server::sendMessageToChannel(Channel* channel, const std::vector<SocketFd>& excludeClients, const std::string& message) const
 {
-	// TODO: add checks for channel permissions and so on (?).
 	if (!channel) {
 		return false;
 	}
@@ -364,7 +363,6 @@ void Server::deleteDisconnectedClients()
 					break;
 				}
 			}
-			// TODO: remove client from it's channels
 			int removedChannelCount = 0;
 			for (ChannelsMap::iterator channelMapIt = this->channelsMap.begin(); channelMapIt!=this->channelsMap.end(); ++channelMapIt) {
 				Channel* channel = channelMapIt->second;

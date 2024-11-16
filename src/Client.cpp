@@ -45,7 +45,7 @@ std::string Client::getUserInfo() const { return this->getNickname()+"!"+this->g
 const int& Client::getSocketFd() const { return socketFd; }
 const ClientState& Client::getState() const { return state; }
 const std::string& Client::getLocalBuffer() const { return localBuffer; }
-const std::string& Client::getNickname() const { return nickname; }
+std::string Client::getNickname() const { return nickname.empty() ? "*" : nickname; }
 const std::string& Client::getUsername() const { return username; }
 const std::string& Client::getHostname() const { return hostname; }
 const std::string& Client::getRealName() const { return realName; }

@@ -45,31 +45,49 @@ enum ResponseCode {
 	ERR_CHANOPRIVSNEEDED = 482,
 };
 
+std::ostream& operator<<(std::ostream& os, const ResponseCode& code);
+
 class ResponseMsg {
 private:
 	static std::string hostname;
 public:
-	static const std::string& getHostname();
-
 	ResponseMsg();
 	~ResponseMsg();
 
-private:
-	static std::stringstream& generateResponseCommonPart(std::stringstream& ss, ResponseCode code, const std::string& target);
-
 public:
-	static std::string getDefaultMessage(ResponseCode code);
-	static bool isHostnameSet();
+	static std::string getHostname();
 	static void setHostname(const std::string& newHostname);
 
-	static std::string genericResponse(ResponseCode code, const std::string& target, const std::string& channelName);
-	static std::string genericResponse(ResponseCode code, const std::string& target, const std::string& channelName, const std::string& customMessage);
+// MESSAGE GENERATION
+public:
+	static std::string getDefaultCodeMessage(ResponseCode code);
 
-	static std::string genericCommandResponse(const std::string& commandName, const std::vector<std::string>& params);
+
+	static std::string genericResponse(ResponseCode code, const std::string& targetNickname);
+	static std::string genericResponse(ResponseCode code, const std::string& targetNickname, const std::string& customMessage);
+
+
+	static std::string errorResponse(ResponseCode code, const std::string& targetNickname, const std::string& commandOrChannelName);
+	static std::string errorResponse(ResponseCode code, const std::string& targetNickname, const std::string& commandOrChannelName, const std::string& customMessage);
+
+	static std::string noticeResponse(const std::string& senderNickname, const std::string& commandName, const std::string& message);
+	static std::string noticeResponse(const std::string& senderNickname, const std::string& targetNickname, const std::string& commandName, const std::string& message);
+
+
+
+	static std::string welcomeResponse(const Client& client);
+
+
+	static std::string joinConfirmResponse(const Client& client, const std::string& channelName);
+	static std::string replyNamesListResponse(const Client& client, const Channel& channel, const std::string& userList);
+	static std::string replyEndOfNamesResponse(const Client& client, const Channel& channel);
+
+
+	static std::string modeUpdateResponse(const std::vector<std::string>& params);
+	static std::string replyModeActiveListResponse(const Channel& channel);
 
 	static std::string inviteResponse(const Client& requestedFrom, const Client& invitedClient, const std::string& channelName);
 	static std::string nicknameChangeResponse(const Client& client, const std::string& newNickname);
-	static std::string joinConfirmResponse(const Client& client, const std::string& channelName);
 	static std::string pongResponse(const std::string& token);
 	static std::string privMsgResponse(const std::string& sender, const std::string& target, const std::string& message);
 	static std::string userKickedResponse(const std::string& kickerNickname, const std::string& kickedNickname, const std::string& channelName, const std::string& reason);

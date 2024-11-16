@@ -7,22 +7,21 @@ JoinCmd::~JoinCmd() { }
 
 void JoinCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
+	std::string usage = "Usage: " + this->commandName + " <channel> [password]";
 	std::vector<std::string> copiedParams(params);
 
 	if (copiedParams.empty()) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Not enough parameters. Usage: /JOIN <channel> [password]"));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 		return;
 	}
-
-	// check for atleast 1 arg
 
 	std::string channelName = copiedParams[0];
 	if (!IRCUtils::isValidChannelName(channelName)) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channelName, "Invalid channel name"));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channelName, "Invalid channel name"));
 		return;
 	}
 
-	std::string possiblePassword = "";
+	std::string possiblePassword;
 	bool isPasswordProvided = false;
 
 	if (copiedParams.size()>1) {
@@ -32,9 +31,8 @@ void JoinCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 			copiedParams.pop_back();
 		}
 	}
-	// TODO: se vogliamo gestire join di piu' canali, modificare questo if.
 	if (copiedParams.size()!=1) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of args"));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 		return;
 	}
 	Channel* channel = server.getChannelByName(channelName);
@@ -67,8 +65,8 @@ void JoinCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 
 	// Invio lista utenti
 	std::string userList = channel->getClientsNicknames();
-	requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_NAMREPLY, requestedFrom.getNickname(), "= "+channelName, userList));
+	requestedFrom.sendMessage(ResponseMsg::replyNamesListResponse(requestedFrom, *channel, userList));
 
 	// Fine della lista
-	requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_ENDOFNAMES, requestedFrom.getNickname(), channelName, "End of /NAMES list."));
+	requestedFrom.sendMessage(ResponseMsg::replyEndOfNamesResponse(requestedFrom, *channel));
 }

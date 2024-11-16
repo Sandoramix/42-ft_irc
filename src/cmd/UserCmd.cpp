@@ -27,17 +27,18 @@ UserCmd::~UserCmd() { }
  */
 void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
+	std::string usage = "Usage: " + this->commandName + " <username> <mode> <unused> <realname>";
 	if (requestedFrom.getState()<CS_PASS_SENT) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname(), ""));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTREGISTERED, requestedFrom.getNickname()));
 		return;
 	}
 	if (requestedFrom.isUserCmdSent()) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_ALREADYREGISTRED, requestedFrom.getNickname(), ""));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_ALREADYREGISTRED, requestedFrom.getNickname()));
 		debugError("Client[" << requestedFrom.getSocketFd() << "] tried to register but the client is already registered");
 		return;
 	}
 	if (params.size()!=4) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of parameters. Usage: USER <username> <mode> <unused> <realname>"));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 		debugError("Client[" << requestedFrom.getSocketFd() << "] tried to register but invalid number of parameters was provided");
 		return;
 	}
@@ -52,6 +53,6 @@ void UserCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 	requestedFrom.setIsUserCmdSent(true);
 	if (requestedFrom.isUserCmdSent() && requestedFrom.isNickCmdSent() && !requestedFrom.isFullyRegistered()) {
 		requestedFrom.setState(CS_ISFULLY_REGISTERED);
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_WELCOME, requestedFrom.getNickname(), ""));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_WELCOME, requestedFrom.getNickname()));
 	}
 }

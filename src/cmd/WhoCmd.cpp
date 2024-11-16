@@ -8,8 +8,9 @@ WhoCmd::~WhoCmd() { }
 
 void WhoCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
+	std::string usage = "Usage: " + this->commandName + " <target>";
 	if (params.size()!=1 || params[0].empty()) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "WHO <target>"));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 		return;
 	}
 
@@ -37,10 +38,7 @@ void WhoCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTONCHANNEL, requestedFrom.getNickname(), target));
 			return;
 		}
-//		if (!channel->isClientOperator(&requestedFrom)) {
-//			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), target));
-//			return;
-//		}
+
 		const ClientsVector& clients = channel->getAllClients();
 		clientsToSend.insert(clientsToSend.end(), clients.begin(), clients.end());
 	}

@@ -7,7 +7,6 @@ KickCmd::KickCmd(Server& server)
 
 KickCmd::~KickCmd() { }
 
-
 /**
  * @brief Usage: KICK \<channel> \<user> [:reason]
  * @param requestedFrom client that is trying to run the command
@@ -15,9 +14,10 @@ KickCmd::~KickCmd() { }
  */
 void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
+	std::string usage = "Usage: " + this->commandName + " <channel> <user> [reason]";
 	// Check the required parameters: <channel> <user> [reason]
 	if (params.size()<2 || params.size()>3) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "KICK <channel> <user> [reason]"));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 		return;
 	}
 
@@ -28,24 +28,24 @@ void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 	// Check if the channel exists
 	Channel* channel = server.getChannelByName(channelName);
 	if (!channel) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channelName, "No such channel: "+channelName));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channelName, "No such channel: "+channelName));
 		return;
 	}
 	if (!channel->isClientInChannel(&requestedFrom)) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), channelName, "You are not inside this channel"));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), channelName, "You are not inside this channel"));
 		return;
 	}
 
 	// Verify that the client is an operator in the channel
 	if (!channel->isClientOperator(&requestedFrom)) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), channelName, "You are not a channel operator"));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), channelName));
 		return;
 	}
 
 	// Check if the target client is in the channel
 	Client* targetClient = server.findClientByNickname(targetNickname, true);
 	if (!targetClient || !channel->isClientInChannel(targetClient)) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_USERNOTINCHANNEL, requestedFrom.getNickname(), channelName, targetNickname+" is not in the channel"));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_USERNOTINCHANNEL, requestedFrom.getNickname(), channelName, targetNickname+" is not in the channel"));
 		return;
 	}
 

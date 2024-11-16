@@ -7,21 +7,22 @@ InviteCmd::~InviteCmd() { }
 
 void InviteCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
+	std::string usage = "Usage: " + this->commandName + " <nickname> <channel>";
 	if (params.size()!=2) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "You must type: <nickname> <channel>"));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 	}
 
 	std::string channelName = params[1];
 	Channel* channel = server.getChannelByName(channelName);
 	if (channel==NULL) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channelName));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channelName));
 		return;
 	}
 
 	std::string nickname = params[0];
 	Client* user = server.findClientByNickname(nickname, true);
 	if (user==NULL) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHNICK, requestedFrom.getNickname(), nickname));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_NOSUCHNICK, requestedFrom.getNickname(), nickname));
 		return;
 	}
 
@@ -31,7 +32,7 @@ void InviteCmd::run(Client& requestedFrom, const std::vector<std::string>& param
 
 	// Verifica se il mittente è operatore del canale
 	if (!channel->isClientOperator(&requestedFrom)) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), channelName));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), channelName));
 		return;
 	}
 

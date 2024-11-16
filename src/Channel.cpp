@@ -160,7 +160,7 @@ bool Channel::inviteClient(Client* client)
 
 // GETTERS/SETTERS ------------------------------------------------------------
 
-const std::string& Channel::getName() const { return this->name; }
+std::string Channel::getName() const { return this->name.empty() ? "*" : this->name; }
 const std::string& Channel::getTopic() const { return this->topic; }
 const std::string& Channel::getPassword() const { return this->password; }
 bool Channel::getPasswordProtected() const { return this->isPasswordProtected; }
@@ -170,7 +170,7 @@ bool Channel::getIsInviteOnly() const { return this->isInviteOnly; }
 bool Channel::getIsTopicChangeOnlyForOperators() const { return this->isTopicChangePrivilege; }
 std::string Channel::getClientsNicknames() const
 {
-	std::string clientsNicknames = "";
+	std::string clientsNicknames;
 	for (ClientsMap::const_iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
 		if (it!=this->clients.begin())
 			clientsNicknames += " ";

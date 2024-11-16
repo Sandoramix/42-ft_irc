@@ -9,77 +9,40 @@ bool ModeCmd::executeViewOnlyMode(Client& requestedFrom, Channel* channel, const
 {
 	const std::string& mode = params[1];
 	if (mode=="+b") {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_ENDOFBANLIST, requestedFrom.getNickname(), channel->getName()));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(RPL_ENDOFBANLIST, requestedFrom.getNickname(), channel->getName()));
 		return true;
 	}
 
 	return false;
 }
 
-void ModeCmd::showChannelModes(Client& requestedFrom, Channel* channel)
-{
-	std::stringstream ss;
-	std::vector<std::string> modeValues;
-	int enabledModes = 0;
-	ss << "+";
-	if (channel->getIsInviteOnly()) {
-		ss << "i";
-		enabledModes++;
-	}
-	if (channel->getIsTopicChangeOnlyForOperators()) {
-		ss << "t";
-		enabledModes++;
-	}
-	if (channel->getPasswordProtected()) {
-		ss << "k";
-		modeValues.push_back(channel->getPassword());
-		enabledModes++;
-	}
-	if (channel->getMaxClients()>0) {
-		ss << "l";
-		std::stringstream limit;
-		limit << channel->getMaxClients();
-		modeValues.push_back(limit.str());
-		enabledModes++;
-	}
-	if (enabledModes==0) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_CHANNELMODEIS, requestedFrom.getNickname(), channel->getName(), ""));
-		return;
-	}
-	ss << " ";
-	for (size_t i = 0; i<modeValues.size(); i++) {
-		if (i>0) { ss << " "; }
-		ss << modeValues[i];
-	}
-	requestedFrom.sendMessage(ResponseMsg::genericResponse(RPL_CHANNELMODEIS, requestedFrom.getNickname(), channel->getName(), ss.str()));
-}
-
 void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 {
+	std::string usage = "Usage: " + this->commandName + " <channel> <mode> [param/s]";
 	if (params.empty()) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 		return;
 	}
 
 	const std::string& channelName = params[0];
 	bool isTargetAChannel = IRCUtils::isValidChannelName(channelName);
 	if (!isTargetAChannel) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), params[0]));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), params[0]));
 		return;
 	}
 	Channel* channel = server.getChannelByName(channelName);
 	if (!channel) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channelName));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_NOSUCHCHANNEL, requestedFrom.getNickname(), channelName));
 		return;
 	}
 	if (!channel->isClientInChannel(&requestedFrom)) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NOTONCHANNEL, requestedFrom.getNickname(), channelName));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_NOTONCHANNEL, requestedFrom.getNickname(), channelName));
 		return;
 	}
 
 	// Show channel modes and exit
 	if (params.size()==1) {
-		this->showChannelModes(requestedFrom, channel);
+		requestedFrom.sendMessage(ResponseMsg::replyModeActiveListResponse(*channel));
 		return;
 	}
 
@@ -90,14 +53,14 @@ void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 
 	// Every mode below can be executed only by channel operators
 	if (!channel->isClientOperator(&requestedFrom)) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), channelName));
+		requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_CHANOPRIVSNEEDED, requestedFrom.getNickname(), channelName));
 		return;
 	}
 
 	const std::string& mode = params[1];
 	/// TRUE=`+`; FALSE=`-`
 	if (mode.size()<=1) {
-		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 		return;
 	}
 
@@ -115,7 +78,7 @@ void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 		}
 		case MODE_PASSWORD: {
 			if (modeSwitch && channel->getPasswordProtected()) {
-				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_KEYSET, requestedFrom.getNickname(), channelName));
+				requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_KEYSET, requestedFrom.getNickname(), channelName));
 				return;
 			}
 			if (!modeSwitch) {
@@ -126,13 +89,13 @@ void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 				lastUsedParam++;
 				if (lastUsedParam>=params.size()) {
 					requestedFrom
-							.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+							.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 					return;
 				}
 				std::string password = params[lastUsedParam];
 				if (password.empty()) {
 					requestedFrom
-							.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+							.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 					return;
 				}
 				channel->setPasswordProtected(true);
@@ -143,17 +106,17 @@ void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 		case MODE_OPERATOR: {
 			lastUsedParam++;
 			if (lastUsedParam>=params.size()) {
-				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 				return;
 			}
-			std::string nickname = params[lastUsedParam];
+			const std::string& nickname = params[lastUsedParam];
 			if (nickname.empty()) {
-				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 				return;
 			}
 			Client* client = channel->findClientByNickname(nickname);
 			if (!client) {
-				requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_USERNOTINCHANNEL, requestedFrom.getNickname(), channelName));
+				requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_USERNOTINCHANNEL, requestedFrom.getNickname(), channelName));
 				return;
 			}
 			if (modeSwitch) {
@@ -169,14 +132,14 @@ void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 				lastUsedParam++;
 				if (lastUsedParam>=params.size()) {
 					requestedFrom
-							.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), "", "Invalid number of arguments. Usage: /MODE <channel> <mode> [param/s]"));
+							.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 					return;
 				}
-				std::string limitStr = params[lastUsedParam];
+				const std::string& limitStr = params[lastUsedParam];
 				char* end;
 				long limit = strtol(limitStr.c_str(), &end, 10);
 				if (end==limitStr.c_str() || *end!='\0' || limit<0 || limit<(long)channel->getClientsSize()) {
-					requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), channelName, "Invalid limit"));
+					requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), channelName, "Invalid limit"));
 					return;
 				}
 				channel->setMaxClients(limit);
@@ -189,12 +152,12 @@ void ModeCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
 		default: {
 			std::stringstream ss;
 			ss << "(" << mode[i] << ")";
-			requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_UNKNOWNMODE, requestedFrom.getNickname(), channelName, ss.str()));
+			requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_UNKNOWNMODE, requestedFrom.getNickname(), channelName, ss.str()));
 			return;
 		}
 		}
 	}
-	this->server.sendMessageToChannel(channel, std::vector<SocketFd>(), ResponseMsg::genericCommandResponse(this->commandName, params));
+	this->server.sendMessageToChannel(channel, std::vector<SocketFd>(), ResponseMsg::modeUpdateResponse(params));
 }
 
 
