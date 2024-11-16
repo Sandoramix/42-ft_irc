@@ -87,15 +87,9 @@ bool ResponseMsg::isHostnameSet()
 	return false;
 }
 
-std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target, const std::string& channelName)
-{
-	return genericResponse(code, target, channelName, getDefaultMessage(code));
-}
-
-std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target, const std::string& channelName, const std::string& customMessage)
+std::stringstream& ResponseMsg::generateResponseCommonPart(std::stringstream& ss, ResponseCode code, const std::string& target)
 {
 	std::string host = isHostnameSet() ? hostname : "*";
-	std::stringstream ss;
 
 	std::stringstream codeStream;
 	codeStream << code;
@@ -108,7 +102,20 @@ std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& t
 
 	std::string codeAsString = codeStream.str();
 
-	ss << ":" << host << " " << codeAsString << " " << (target.empty() ? "*" : target) << (channelName.empty() ? "" : " "+channelName) << " :" << customMessage;
+	ss << ":" << host << " " << codeAsString << " " << (target.empty() ? "*" : target);
+	return ss;
+}
+
+std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target, const std::string& channelName)
+{
+	return genericResponse(code, target, channelName, getDefaultMessage(code));
+}
+
+std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& target, const std::string& channelName, const std::string& customMessage)
+{
+	std::stringstream ss;
+	generateResponseCommonPart(ss, code, target);
+	ss << (channelName.empty() ? "" : " "+channelName) << " :" << customMessage;
 	debugResponse(ss.str());
 	return ss.str();
 }
@@ -117,6 +124,7 @@ std::string ResponseMsg::genericCommandResponse(const std::string& commandName, 
 	std::string host = isHostnameSet() ? hostname : "*";
 
 	std::stringstream ss;
+
 	ss << ":" << host << " " << commandName << (params.empty() ? "" : " ");
 	for (size_t i = 0; i<params.size(); i++) {
 		if (i>0) { ss << " "; }

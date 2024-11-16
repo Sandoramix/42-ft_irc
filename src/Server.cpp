@@ -284,7 +284,7 @@ bool Server::runClientCommands(Client* client)
 			commandArgs = commandArgs.substr(firstSpace+1);
 		}
 		if (this->commandsMap.find(commandName)==this->commandsMap.end()) {
-			client->sendMessage(ResponseMsg::genericResponse(ERR_UNKNOWNCOMMAND, client->getNickname(), "", commandName));
+			client->sendMessage(ResponseMsg::genericResponse(ERR_UNKNOWNCOMMAND, client->getNickname(), commandName, "command not found"));
 
 			debugError("Client[" << client->getSocketFd() << "] tried to run unknown command [" << commandName << "] with arguments \"" << commandArgs << "\"");
 

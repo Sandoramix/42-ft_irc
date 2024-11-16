@@ -54,6 +54,9 @@ public:
 	ResponseMsg();
 	~ResponseMsg();
 
+private:
+	static std::stringstream& generateResponseCommonPart(std::stringstream& ss, ResponseCode code, const std::string& target);
+
 public:
 	static std::string getDefaultMessage(ResponseCode code);
 	static bool isHostnameSet();
@@ -70,7 +73,7 @@ public:
 	static std::string pongResponse(const std::string& token);
 	static std::string privMsgResponse(const std::string& sender, const std::string& target, const std::string& message);
 	static std::string userKickedResponse(const std::string& kickerNickname, const std::string& kickedNickname, const std::string& channelName, const std::string& reason);
-	static std::string whoResponse(Client* client, const Channel *channel);
+	static std::string whoResponse(Client* client, const Channel* channel);
 };
 
 #endif //FT_IRC_RESPONSEMSG_HPP
