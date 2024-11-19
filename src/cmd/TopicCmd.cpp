@@ -12,7 +12,7 @@ void TopicCmd::run(Client& requestedFrom, const std::vector<std::string>& params
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
 		return;
 	}
-
+	
 	const std::string& channelName = params[0];
 	Channel* channel = server.getChannelByName(channelName);
 	if (!channel) {

@@ -43,6 +43,7 @@ enum ResponseCode {
 	ERR_BADCHANNELKEY = 475,
 	ERR_USERNOTINCHANNEL = 441,
 	ERR_CHANOPRIVSNEEDED = 482,
+	ERR_OPERATOR_CANT_KICK_HIMSELF = 499,
 };
 
 std::ostream& operator<<(std::ostream& os, const ResponseCode& code);
