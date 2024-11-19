@@ -55,6 +55,13 @@ void KickCmd::run(Client& requestedFrom, const std::vector<std::string>& params)
         return;
     }
 
+	// prevent and operator from kicking another operator
+	//if (channel->isClientOperator(targetClient))
+	//{
+    //requestedFrom.sendMessage(ResponseMsg::errorResponse(ERR_OPERATOR_CANT_KICK_OPERATOR, requestedFrom.getNickname(), channelName, "Operators cannot kick other operators"));
+    //return;
+	//}
+
 	// Perform the kick action
 	server.sendMessageToChannel(channel, std::vector<SocketFd>(), ResponseMsg::userKickedResponse(requestedFrom.getNickname(), targetClient->getNickname(), channelName, reasonMsg));
 	channel->removeClient(targetClient);
