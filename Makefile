@@ -1,6 +1,6 @@
 NAME:=ircserv
 
-DEBUG:=true
+DEBUG:=false
 
 
 CXX:=c++
