@@ -102,9 +102,16 @@ bool Channel::removeOperator(Client* client)
 
 	this->operatorClients.erase(std::find(this->operatorClients.begin(), this->operatorClients.end(), client->getSocketFd()));
 
-	if (this->operatorClients.empty() && !this->clients.empty()) {
+	Client* newOperator = NULL;
+	for (ClientsMap::iterator it = this->clients.begin(); it!=this->clients.end(); ++it) {
+		if (it->second->getSocketFd() != client->getSocketFd()){
+			newOperator = it->second;
+			break;
+		}
+	}
+
+	if (this->operatorClients.empty() && newOperator != NULL) {
 		debug("Client[" << client->getSocketFd() << "] left channel as last operator.");
-		Client* newOperator = this->clients.begin()->second;
 		debug("Promoting client[" << newOperator->getSocketFd() << "] to operator");
 		this->operatorClients.push_back(newOperator->getSocketFd());
 	}
@@ -123,9 +130,10 @@ bool Channel::removeClient(Client* client)
 {
 	if (!this->isClientInChannel(client)) { return false; }
 
+	removeOperator(client);
+
 	this->clients.erase(client->getSocketFd());
 
-	removeOperator(client);
 	const std::vector<SocketFd>::iterator& it = std::find(this->invitedClients.begin(), this->invitedClients.end(), client->getSocketFd());
 	if (it!=this->invitedClients.end()) {
 		this->invitedClients.erase(it);
