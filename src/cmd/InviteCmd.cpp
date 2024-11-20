@@ -10,6 +10,7 @@ void InviteCmd::run(Client& requestedFrom, const std::vector<std::string>& param
 	std::string usage = "Usage: " + this->commandName + " <nickname> <channel>";
 	if (params.size()!=2) {
 		requestedFrom.sendMessage(ResponseMsg::genericResponse(ERR_NEEDMOREPARAMS, requestedFrom.getNickname(), usage));
+		return;
 	}
 
 	std::string channelName = params[1];

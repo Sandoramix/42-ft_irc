@@ -200,10 +200,6 @@ void Server::acceptConnection()
 		addr.sin_addr.s_addr = inet_addr(this->host.c_str());
 	}
 
-	std::cout << "Hostname: [" << clientHostname << "]" << std::endl;
-
-
-
 	client->setHostname(clientHostname);
 
 	this->allPollFds.push_back(pollfd());

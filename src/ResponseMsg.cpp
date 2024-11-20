@@ -106,7 +106,7 @@ std::string ResponseMsg::genericResponse(ResponseCode code, const std::string& t
 	std::stringstream ss;
 
 	ss << ":" << getHostname()
-	   << code
+	   << " " << code
 	   << " " << (targetNickname.empty() ? "*" : targetNickname)
 	   << " :" << customMessage;
 
@@ -124,7 +124,7 @@ std::string ResponseMsg::errorResponse(ResponseCode code, const std::string& tar
 	std::stringstream ss;
 
 	ss << ":" << getHostname()
-	   << code
+	   << " " << code
 	   << " " << (targetNickname.empty() ? "*" : targetNickname)
 	   << " " << (commandOrChannelName.empty() ? "*" : commandOrChannelName)
 	   << " :" << customMessage;
@@ -161,7 +161,7 @@ std::string ResponseMsg::welcomeResponse(const Client& client)
 {
 	std::stringstream ss;
 
-	ss << ":" << getHostname() << RPL_WELCOME << " " << client.getUserInfo() << " :Welcome to this IRC Server";
+	ss << ":" << getHostname() << " " << RPL_WELCOME << " " << client.getUserInfo() << " :Welcome to this IRC Server";
 	debugResponse(ss.str());
 	return ss.str();
 }
