@@ -1,10 +1,10 @@
 NAME:=ircserv
 
-DEBUG:=false
-
+DEBUG=false
+debug: DEBUG:=true
 
 CXX:=c++
-CXXFLAGS:=-std=c++98 -g -Wall -Wextra -Werror -DDEBUG=$(DEBUG) -I./includes
+CXXFLAGS=-std=c++98 -g -Wall -Wextra -Werror -DDEBUG=$(DEBUG) -I./includes
 
 SRC = ./src/Channel.cpp \
 	./src/Client.cpp \
@@ -27,13 +27,12 @@ SRC = ./src/Channel.cpp \
 
 
 all: $(NAME)
-
-debug: DEBUG:=true
 debug: all
 
 $(NAME): $(SRC)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 	@echo "[${NAME}] Compiled successfully."
+	[ "$(DEBUG)" = "false" ] || echo "\e[1;31m[DEBUG] mode is enabled.\e[0m"
 
 PORT:=6667
 PASSW:=password
@@ -51,6 +50,7 @@ getsrc:
 	@curl 'https://raw.githubusercontent.com/Sandoramix/42cursus/master/utils/getSrc.py' | python3 - -ext cpp
 
 re: fclean all
+re-debug: fclean debug
 re-valgrind: fclean all valgrind
 
 .PHONY: all clean fclean re getsrc
